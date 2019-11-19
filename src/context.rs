@@ -147,6 +147,7 @@ impl Context {
 
     pub fn clear(&mut self, col: Color) {
         unsafe {
+            self.gl.clear(glow::COLOR_BUFFER_BIT | glow::DEPTH_BUFFER_BIT);
             self.gl.clear_color(col.x, col.y, col.z, col.w);
         }
     }
