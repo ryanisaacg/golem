@@ -1,7 +1,7 @@
 use blinds::traits::*;
 use blinds::*;
 use golem::{Context, GolemError};
-use golem::input::{Color, Uniforms, Vec2, Vec4, VertexBuilder, vec2, rgba};
+use golem::input::{Uniforms, rgba};
 use golem::program::{Attribute, ShaderDescription};
 
 async fn app(window: Window, ctx: glow::Context, mut events: EventStream) -> Result<(), GolemError> {
@@ -14,19 +14,18 @@ async fn app(window: Window, ctx: glow::Context, mut events: EventStream) -> Res
         0.0, 0.5,           0.0, 0.0, 1.0, 1.0
     ];
 
-    let vertex_input = &[
-        Attribute::new::<Vec2>("vert_position"),
-        Attribute::new::<Vec4>("vert_color"),
-    ];
     let shader = ctx.new_shader(ShaderDescription {
-        vertex_input: vertex_input,
-        fragment_input: &[ Attribute::new::<Vec4>("frag_color") ],
+        vertex_input: &[
+            Attribute::Vector(2, "vert_position"),
+            Attribute::Vector(4, "vert_color"),
+        ],
+        fragment_input: &[ Attribute::Vector(4, "frag_color") ],
         uniforms: &[],
         vertex_shader: r#" void main() {
             gl_Position = vec4(vert_position, 0, 1);
             frag_color = vert_color;
         }"#,
-        fragment_shader: 
+        fragment_shader:
         r#" void main() {
             gl_FragColor = frag_color;
         }"#

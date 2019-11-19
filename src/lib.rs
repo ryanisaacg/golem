@@ -1,6 +1,8 @@
-// TODO: maybe an enum for uniforms, attributes?
 // TODO: same array for uniforms and draw lists
 // TODO: usize draw lists
+// TODO: should there be a vertex-safe way of inserting stuff into the VBO?
+// TODO: validate vec and matrix dimensions
+// TODO: support non-float?
 #[derive(Debug)]
 pub struct GolemError();
 mod context;

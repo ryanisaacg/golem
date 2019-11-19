@@ -1,5 +1,4 @@
 use crate::Context;
-use crate::program::{Attribute, GlType, VertexType};
 use std::collections::HashMap;
 
 pub struct VertexBuffer(pub(crate) Buffer);
@@ -7,56 +6,6 @@ pub struct VertexBuffer(pub(crate) Buffer);
 impl VertexBuffer {
     pub fn send_data(&mut self, start: usize, data: &[f32]) {
         self.0.send_data(glow::ARRAY_BUFFER, start, data);
-    }
-}
-
-pub struct VertexBuilder<'a> {
-    attr: &'a [Attribute],
-    buffer: Vec<f32>,
-}
-
-impl<'a> VertexBuilder<'a> {
-    pub fn new(attr: &'a [Attribute]) -> VertexBuilder {
-        VertexBuilder {
-            attr,
-            buffer: Vec::new(),
-        }
-    }
-
-    pub fn start<'b>(&'b mut self) -> Vertex<'a, 'b> {
-        Vertex {
-            progress: 0,
-            buffer: self
-        }
-    }
-
-    pub fn data(&'a self) -> &'a Vec<f32> {
-        &self.buffer
-    }
-}
-
-pub struct Vertex<'a, 'b> {
-    progress: usize,
-    buffer: &'b mut VertexBuilder<'a>
-}
-
-impl<'a, 'b> Vertex<'a, 'b> {
-    pub fn add<T>(mut self, val: &T) -> Self
-            where T: GlType + VertexType {
-        if self.buffer.attr[self.progress].matches::<T>() {
-            val.to_buffer(&mut self.buffer.buffer);
-            self.progress += 1;
-
-            self
-        } else {
-            panic!("TODO bad type in vertex");
-        }
-    }
-
-    pub fn build(self) {
-        if self.progress != self.buffer.attr.len() {
-            panic!("Vertex not filled out completely before build()");
-        }
     }
 }
 

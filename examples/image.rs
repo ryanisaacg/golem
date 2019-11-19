@@ -1,64 +1,55 @@
 use blinds::traits::*;
-use blinds::{EventStream, Window, Settings, run};
-use golem::buffers::{VertexBuffer, ElementBuffer};
-use golem::shaders::{Attribute, VertexShader, FragmentShader, ShaderProgram};
+use blinds::*;
+use golem::{Context, GolemError};
+use golem::attribute::{Attribute, ShaderType};
+use golem::input::{Color, Uniforms, Vec2, Vec4, VertexBuilder, vec2, rgba};
+use golem::program::{Attribute, ShaderDescription};
 
-// TODO: how to handle image?
+async fn app(window: Window, ctx: glow::Context, mut events: EventStream) -> Result<(), GolemError> {
+    let mut ctx = Context::from_glow(ctx);
 
-static VERTEX_SHADER: &'static str = r#"
-void main() {
-    gl_Position = vec4(v_pos, 0, 1);
-    frag_uv = vert_uv;
-}"#;
-static FRAGMENT_SHADER: &'static str = r#"
-void main() {
-    gl_FragColor = texture(tex, frag_uv);
-}"#;
-
-static VERTICES: [Vec2; 4] = [
-    Vec2::new(0.0, 0.0),
-    Vec2::new(0.0, 1.0),
-    Vec2::new(1.0, 1.0),
-    Vec2::new(1.0, 0.0),
-];
-
-async fn app(window: Window, gl: RawContext, mut events: EventStream) -> Result<(), GraphicsError> {
-    let ctx = Context::from_glow(gl);
-
-    let texture = ctx.upload_texture_from_bytes(include_bytes!("image.png"));
-
-    let vertex_input = &[
-        Attribute::new::<Vec2>("v_pos"),
+    let vertices = [
+        // Position         Color
+        -0.5, -0.5,         1.0, 0.0, 0.0, 1.0,
+        0.5, -0.5,          0.0, 1.0, 0.0, 1.0,
+        0.0, 0.5,           0.0, 0.0, 1.0, 1.0
     ];
-    let fragment_input = &[
-        Attribute::new::<Vec2>("frag_uv"),
-    ];
-    let uniforms = &[
-        Attribute::new::<Sampler2D>("tex")
-    ];
-    let vertex_shader = VertexShader::new(vertex_input, fragment_input, VERTEX_SHADER);
-    let fragment_shader = FragmentShader::new(fragment_input, FRAGMENT_SHADER);
-    let shader = ShaderProgram::new(&mut ctx, vertex_shader, fragment_shader, uniforms)?;
 
-    let vb = VertexBuffer::new(vertex_input);
-    let eb = ElementBuffer::new();
-    let mut vb_data = VertexBufferBuilder::new();
-    vb.send_data(0, VERTICES.map(|(pos, uv)| vb.new_vertex().add(pos).add(uv)));
-    ebo.send_data(0, &[0, 1, 2]);
+    let shader = ctx.new_shader(ShaderDescription {
+        vertex_input: &[
+            Attribute::Vector(2, "vert_position"),
+            Attribute::Vector(4, "vert_color"),
+        ],
+        fragment_input: &[ Attribute::Vector(4, "frag_color") ],
+        uniforms: &[],
+        vertex_shader: r#" void main() {
+            gl_Position = vec4(vert_position, 0, 1);
+            frag_color = vert_color;
+        }"#,
+        fragment_shader:
+        r#" void main() {
+            gl_FragColor = frag_color;
+        }"#
+    })?;
 
-    let surface = ctx.window_surface();
+    let mut vb = ctx.new_vertex_buffer();
+    let mut eb = ctx.new_element_buffer();
+    vb.send_data(0, &vertices);
+    eb.send_data(0, &[0, 1, 2]);
 
-    while let Some(event) = events.next().await {
-        if let Event::Draw = event {
-            ctx.clear(Color::BLACK);
-            let uniforms = &[
-                ("tex", &texture)
-            ];
-            ctx.render(surface, &shader, &vb, &eb);
-        }
+    let uniforms = Uniforms::new();
+ 
+    while let Some(_) = events.next().await {
+        ctx.clear(rgba(0.0, 0.0, 0.0, 0.0));
+        ctx.draw(&shader, &vb, &eb, &uniforms, &[0..3]);
+        window.present();
     }
+
+    Ok(())
 }
 
 fn main() {
-    run(Settings::default(), app);
+    blinds::run_gl(Settings::default(), |window, gfx, events| async move {
+        app(window, gfx, events).await.unwrap()
+    });
 }

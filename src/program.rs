@@ -1,90 +1,70 @@
 use crate::input::{Vec2, Vec4};
 
-pub(crate) enum Position {
-    Input, Output, Uniform
-}
-
 #[derive(Clone)]
-pub struct Attribute {
-    pub(crate) name: String,
-    pub(crate) size: i32,
-    pub(crate) type_index: u32,
-    gl_type: &'static str,
+pub enum Attribute {
+    Scalar(&'static str),
+    Vector(u8, &'static str),
+    Matrix(u8, u8, &'static str),
 }
 
-impl Attribute {
-    pub fn new<T: GlType>(name: &str) -> Attribute {
-        Attribute {
-            name: String::from(name),
-            size: T::size(),
-            gl_type: T::type_value(),
-            type_index: T::type_index(),
+pub(crate) enum Position { Input, Output }
+
+impl Position {
+    #[cfg(target_arch = "wasm32")]
+    fn glsl_string(self) -> &'static str {
+        use Position::*;
+
+        match self {
+            Input => "attribute ",
+            Output => "varying ",
         }
     }
 
-    pub(crate) fn as_glsl(&self, position: Position, string: &mut String) {
-        #[cfg(target_arch = "wasm32")]
-        let quantifier = match position {
-            Position::Input => "attribute",
-            Position::Output => "varying",
-            Position::Uniform => "uniform",
+    #[cfg(not(target_arch = "wasm32"))]
+    fn glsl_string(self) -> &'static str {
+        use Position::*;
+
+        match self {
+            Input => "in ",
+            Output => "out ",
+        }
+    }
+}
+
+impl Attribute {
+    pub fn name(&self) -> &str {
+        use Attribute::*;
+
+        match self {
+            Scalar(name) => name,
+            Vector(_, name) => name,
+            Matrix(_, _, name) => name,
+        }
+    }
+
+    pub fn size(&self) -> i32 {
+        use Attribute::*;
+
+        match self {
+            Scalar(_) => 1,
+            Vector(n, _) => *n as i32,
+            Matrix(m, n, _) => (m * n) as i32,
+        }
+    }
+
+
+    pub(crate) fn as_glsl(&self, pos: Position, shader: &mut String) {
+        use Attribute::*;
+
+        shader.push_str(pos.glsl_string());
+        let (gl_type, name) = match self {
+            Scalar(name) => ("float ".to_owned(), name),
+            Vector(n, name) => (format!("vec{} ", n), name),
+            Matrix(m, n, name) => (format!("mat{}x{} ", m, n), name),
         };
-        #[cfg(not(target_arch = "wasm32"))]
-        let quantifier = match position {
-            Position::Input => "in",
-            Position::Output => "out",
-            Position::Uniform => "uniform",
-        };
-        string.push_str(quantifier);
-        string.push_str(" ");
-        string.push_str(self.gl_type);
-        string.push_str(" ");
-        string.push_str(&self.name);
-        string.push_str(";");
-    }
-
-    pub fn matches<T: GlType>(&self) -> bool {
-        self.type_index == T::type_index() && self.size == T::size()
-    }
-}
-
-// TODO: conflating GlType and VertexType, and Attribute should know somehow
-
-pub trait GlType {
-    fn type_value() -> &'static str;
-    fn size() -> i32;
-    fn type_index() -> u32;
-}
-
-pub trait VertexType: GlType {
-    fn to_buffer(&self, buffer: &mut Vec<f32>);
-}
-
-impl GlType for Vec2 {
-    fn type_value() -> &'static str { "vec2" }
-    fn size() -> i32 { 2 }
-    fn type_index() -> u32 { glow::FLOAT }
-}
-
-impl VertexType for Vec2 {
-    fn to_buffer(&self, buffer: &mut Vec<f32>) {
-        let floats: [f32; 2] = (*self).into();
-        
-        buffer.extend(floats.iter())
-    }
-}
-
-impl GlType for Vec4 {
-    fn type_value() -> &'static str { "vec4" }
-    fn size() -> i32 { 4 }
-    fn type_index() -> u32 { glow::FLOAT }
-}
-
-impl VertexType for Vec4 {
-    fn to_buffer(&self, buffer: &mut Vec<f32>) {
-        let floats: [f32; 4] = (*self).into();
-        
-        buffer.extend(floats.iter())
+        shader.push_str(&gl_type);
+        shader.push_str(name);
+        shader.push_str(";");
     }
 }
 

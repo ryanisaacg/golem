@@ -23,7 +23,7 @@ fn generate_shader_text(body: &str, inputs: &[Attribute], outputs: &[Attribute],
         attr.as_glsl(Position::Output, &mut shader);
     }
     for attr in uniforms.iter() {
-        attr.as_glsl(Position::Uniform, &mut shader);
+        //attr.as_glsl(Position::Uniform, &mut shader);
     }
     shader.push_str(body);
 
@@ -59,6 +59,7 @@ impl Context {
         unsafe {
             let vertex = gl.create_shader(glow::VERTEX_SHADER).expect("TODO");
             let vertex_source = generate_shader_text(desc.vertex_shader, desc.vertex_input, desc.fragment_input, desc.uniforms);
+            println!("{}", vertex_source);
             gl.shader_source(vertex, &vertex_source);
             gl.compile_shader(vertex);
             println!("{}", gl.get_shader_info_log(vertex));
@@ -71,7 +72,7 @@ impl Context {
             };
             #[cfg(not(target_arch = "wasm32"))]
             let (fragment_output, fragment_body) = {
-                (&[ Attribute::new::<crate::input::Vec4>("outputColor") ], &desc.fragment_shader.replace("gl_FragColor", "outputColor"))
+                (&[ Attribute::Vector(4, "outputColor") ], &desc.fragment_shader.replace("gl_FragColor", "outputColor"))
             };
             let fragment_source = generate_shader_text(fragment_body, desc.fragment_input, fragment_output, desc.uniforms);
             gl.shader_source(fragment, &fragment_source);
@@ -87,7 +88,7 @@ impl Context {
             gl.bind_frag_data_location(id, 0, "outputColor");
 
             for (index, attr) in desc.vertex_input.iter().enumerate() {
-                gl.bind_attrib_location(id, index as u32, &attr.name);
+                gl.bind_attrib_location(id, index as u32, attr.name());
             }
 
             gl.link_program(id);
@@ -171,18 +172,19 @@ impl Context {
         self.bind(&eb.0, glow::ELEMENT_ARRAY_BUFFER);
         self.errors("program and bind");
         use std::mem::size_of;
-        let stride: i32 = shader.input.iter().map(|attr| attr.size).sum();
+        let stride: i32 = shader.input.iter().map(|attr| attr.size()).sum();
         let stride = stride * size_of::<f32>() as i32;
         let mut offset = 0;
         for (index, attr) in shader.input.iter().enumerate() {
+            let size = attr.size();
             unsafe {
                 let pos_attrib = index as u32;
                 self.gl.enable_vertex_attrib_array(pos_attrib);
                 self.errors("enable");
-                self.gl.vertex_attrib_pointer_f32(pos_attrib, attr.size as i32, attr.type_index, false, stride, offset);
+                self.gl.vertex_attrib_pointer_f32(pos_attrib, size, glow::FLOAT, false, stride, offset);
                 self.errors("pointer");
             }
-            offset += attr.size * size_of::<f32>() as i32;
+            offset += size * size_of::<f32>() as i32;
         }
         self.errors("attributes");
         // TODO: bind uniforms
