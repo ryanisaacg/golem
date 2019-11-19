@@ -4,7 +4,7 @@ use golem::{Context, GolemError};
 use golem::input::{Color, Uniforms, Vec2, Vec4, VertexBuilder, vec2, rgba};
 use golem::program::{Attribute, ShaderDescription};
 
-async fn app(_window: Window, ctx: glow::Context, mut events: EventStream) -> Result<(), GolemError> {
+async fn app(window: Window, ctx: glow::Context, mut events: EventStream) -> Result<(), GolemError> {
     let mut ctx = Context::from_glow(ctx);
 
     let vertices: [(Vec2, Vec4); 3] = [
@@ -46,8 +46,9 @@ async fn app(_window: Window, ctx: glow::Context, mut events: EventStream) -> Re
     let uniforms = Uniforms::new();
  
     while let Some(_) = events.next().await {
-        ctx.clear(rgba(0.0, 0.0, 0.0, 1.0));
+        ctx.clear(rgba(0.0, 0.0, 0.0, 0.0));
         ctx.draw(&shader, &vb, &eb, &uniforms, &[0..3]);
+        window.present();
     }
 
     Ok(())
