@@ -44,12 +44,10 @@ async fn app(_window: Window, ctx: glow::Context, mut events: EventStream) -> Re
     eb.send_data(0, &[0, 1, 2]);
 
     let uniforms = Uniforms::new();
-
-    ctx.set_program(&shader);
-    
+ 
     while let Some(_) = events.next().await {
         ctx.clear(rgba(0.0, 0.0, 0.0, 1.0));
-        ctx.draw(&vb, &eb, &uniforms);
+        ctx.draw(&shader, &vb, &eb, &uniforms, &[0..3]);
     }
 
     Ok(())
