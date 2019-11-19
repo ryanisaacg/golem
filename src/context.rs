@@ -1,7 +1,7 @@
 use glow::HasContext;
 use crate::GolemError;
-use crate::input::{Buffer, Color, ElementBuffer, Surface, VertexBuffer, Uniforms};
-use crate::program::{Attribute, Position, ShaderDescription, ShaderProgram};
+use crate::input::{Buffer, Color, ColorFormat, DrawList, ElementBuffer, Surface, Texture, VertexBuffer};
+use crate::program::{Attribute, Position, Uniform, ShaderDescription, ShaderProgram};
 use std::rc::Rc;
 
 pub struct Context {
@@ -9,7 +9,7 @@ pub struct Context {
     vao: u32 // TODO: manage this
 }
 
-fn generate_shader_text(body: &str, inputs: &[Attribute], outputs: &[Attribute], uniforms: &[Attribute]) -> String {
+fn generate_shader_text(body: &str, inputs: &[Attribute], outputs: &[Attribute], uniforms: &[Uniform]) -> String {
     let mut shader = String::new();
 
     #[cfg(not(target_arch = "wasm32"))]
@@ -124,6 +124,16 @@ impl Context {
         ElementBuffer(self.new_buffer())
     }
 
+    pub fn new_texture(&self, image: &[u8], width: u32, height: u32, color: ColorFormat) -> Texture {
+        // TODO
+        unimplemented!();
+    }
+
+    pub fn bind_texture(&self, tex: &Texture, bind_point: u8) {
+        // TODO
+        unimplemented!();
+    }
+
     pub(crate) fn bind(&self, buffer: &Buffer, target: u32) {
         unsafe {
             self.gl.bind_buffer(target, Some(buffer.id));
@@ -164,7 +174,7 @@ impl Context {
     }
 
     // TODO: API allow glow::LINES
-    pub fn draw(&mut self, shader: &ShaderProgram, vb: &VertexBuffer, eb: &ElementBuffer, u: &Uniforms, draw_list: &[std::ops::Range<i32>]) {
+    pub fn draw(&mut self, shader: &ShaderProgram, vb: &VertexBuffer, eb: &ElementBuffer, draw_list: &[DrawList]) {
         unsafe {
             self.gl.use_program(Some(shader.id));
         }
@@ -189,9 +199,10 @@ impl Context {
         self.errors("attributes");
         // TODO: bind uniforms
         draw_list.iter().for_each(|draw_list| {
-            let length = draw_list.end - draw_list.start;
+            let range = draw_list.range.clone();
+            let length = range.end - range.start;
             unsafe {
-                self.gl.draw_elements(glow::TRIANGLES, length, glow::UNSIGNED_INT, draw_list.start);
+                self.gl.draw_elements(glow::TRIANGLES, length as i32, glow::UNSIGNED_INT, range.start as i32);
             }
             self.errors("draw");
         });

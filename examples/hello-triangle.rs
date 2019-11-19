@@ -1,7 +1,7 @@
 use blinds::traits::*;
 use blinds::*;
 use golem::{Context, GolemError};
-use golem::input::{Uniforms, rgba};
+use golem::input::{DrawList, rgba};
 use golem::program::{Attribute, ShaderDescription};
 
 async fn app(window: Window, ctx: glow::Context, mut events: EventStream) -> Result<(), GolemError> {
@@ -13,6 +13,7 @@ async fn app(window: Window, ctx: glow::Context, mut events: EventStream) -> Res
         0.5, -0.5,          0.0, 1.0, 0.0, 1.0,
         0.0, 0.5,           0.0, 0.0, 1.0, 1.0
     ];
+    let indices = [0, 1, 2];
 
     let shader = ctx.new_shader(ShaderDescription {
         vertex_input: &[
@@ -34,14 +35,15 @@ async fn app(window: Window, ctx: glow::Context, mut events: EventStream) -> Res
     let mut vb = ctx.new_vertex_buffer();
     let mut eb = ctx.new_element_buffer();
     vb.send_data(0, &vertices);
-    eb.send_data(0, &[0, 1, 2]);
+    eb.send_data(0, &indices);
 
-    let uniforms = Uniforms::new();
- 
+    let draw = DrawList::new(0..indices.len());
+
+    ctx.clear(rgba(0.0, 0.0, 0.0, 0.0));
+    ctx.draw(&shader, &vb, &eb, &[draw]);
+    window.present();
+
     while let Some(_) = events.next().await {
-        ctx.clear(rgba(0.0, 0.0, 0.0, 0.0));
-        ctx.draw(&shader, &vb, &eb, &uniforms, &[0..3]);
-        window.present();
     }
 
     Ok(())

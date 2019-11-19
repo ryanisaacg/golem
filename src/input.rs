@@ -1,5 +1,6 @@
 use crate::Context;
 use std::collections::HashMap;
+use std::ops::Range;
 
 pub struct VertexBuffer(pub(crate) Buffer);
 
@@ -30,18 +31,6 @@ impl Buffer {
     }
 }
 
-pub struct Uniforms(HashMap<&'static str, Box<dyn Uniform>>);
-
-impl Uniforms {
-    pub fn new() -> Uniforms {
-        Uniforms(HashMap::new())
-    }
-}
-
-pub trait Uniform {
-
-}
-
 use mint::*;
 
 pub type Vec2 = Vector2<f32>;
@@ -70,4 +59,41 @@ pub struct Texture {
 
 pub struct Surface {
     pub(crate) id: u32
+}
+
+// TODO: matrix uniforms
+
+pub enum UniformValue {
+    Int(i32),
+    Float(f32),
+    Vector2([f32; 2]),
+    Vector3([f32; 3]),
+    Vector4([f32; 4]),
+    IVector2([i32; 2]),
+    IVector3([i32; 3]),
+    IVector4([i32; 4]),
+}
+
+pub struct DrawList {
+    pub(crate) range: Range<usize>,
+    pub(crate) uniforms: Vec<(&'static str, UniformValue)>
+}
+
+impl DrawList {
+    pub fn new(range: Range<usize>) -> DrawList {
+        DrawList {
+            range,
+            uniforms: Vec::new()
+        }
+    }
+
+    pub fn add_uniform_binding(&mut self, name: &str, uni: UniformValue) {
+        // TODO
+        unimplemented!();
+    }
+}
+
+// TODO: BGR, BGRA?
+pub enum ColorFormat {
+    RGB, RGBA
 }

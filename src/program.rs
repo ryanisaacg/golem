@@ -1,4 +1,17 @@
-use crate::input::{Vec2, Vec4};
+pub struct ShaderDescription<'a> {
+    pub vertex_input: &'a [Attribute],
+    pub fragment_input: &'a [Attribute],
+    pub uniforms: &'a [Uniform],
+    pub vertex_shader: &'a str,
+    pub fragment_shader: &'a str,
+}
+
+pub struct ShaderProgram {
+    pub(crate) id: u32,
+    pub(crate) vertex: u32,
+    pub(crate) fragment: u32,
+    pub(crate) input: Vec<Attribute>,
+}
 
 #[derive(Clone)]
 pub enum Attribute {
@@ -68,17 +81,28 @@ impl Attribute {
     }
 }
 
-pub struct ShaderDescription<'a> {
-    pub vertex_input: &'a [Attribute],
-    pub fragment_input: &'a [Attribute],
-    pub uniforms: &'a [Attribute],
-    pub vertex_shader: &'a str,
-    pub fragment_shader: &'a str,
+pub enum NumberType { Int, Float }
+
+// TODO: handle floats v ints?
+pub enum UniformType {
+    Scalar(NumberType),
+    Vector(NumberType, u8),
+    Matrix(NumberType, u8, u8),
+    Sampler(u8),
+    Array(Box<UniformType>, usize),
+    UserType(String),
 }
 
-pub struct ShaderProgram {
-    pub(crate) id: u32,
-    pub(crate) vertex: u32,
-    pub(crate) fragment: u32,
-    pub(crate) input: Vec<Attribute>,
+pub struct Uniform {
+    pub name: &'static str,
+    pub u_type: UniformType,
+}
+
+impl Uniform {
+    pub fn new(name: &'static str, u_type: UniformType) -> Uniform {
+        Uniform {
+            name,
+            u_type
+        }
+    }
 }
