@@ -7,7 +7,7 @@ use golem::program::{Attribute, ShaderDescription};
 async fn app(window: Window, ctx: glow::Context, mut events: EventStream) -> Result<(), GolemError> {
     let mut ctx = Context::from_glow(ctx);
 
-    let vertices: [(Vec2, Vec4); 3] = [
+    let vertices = &[
         (vec2(-0.5, -0.5),  rgba(1.0, 0.0, 0.0, 1.0)),
         (vec2(0.5, -0.5),   rgba(0.0, 1.0, 0.0, 1.0)),
         (vec2(0.0, 0.5),    rgba(0.0, 0.0, 1.0, 1.0)),
