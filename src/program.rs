@@ -44,7 +44,7 @@ impl Attribute {
     }
 
     pub fn matches<T: GlType>(&self) -> bool {
-        self.type_index == T::type_index()
+        self.type_index == T::type_index() && self.size == T::size()
     }
 }
 
