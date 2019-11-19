@@ -120,12 +120,12 @@ impl Context {
         self.errors("bind_buffer");
     }
     
-    pub(crate) fn send_data<T>(&self, bind: u32, length: usize, start: usize, data: &[T]) {
-        use std::mem::{size_of, transmute};
+    pub(crate) fn send_data<T: bytemuck::Pod>(&self, bind: u32, length: usize, start: usize, data: &[T]) {
+        use std::mem::size_of;
         let data_length = size_of::<T>() * data.len();
         // TODO: sound?
+        let u8_buffer = bytemuck::cast_slice(data);
         unsafe {
-            let u8_buffer = transmute(data);
             if data_length + start > length {
                 let new_length = data_length + start;
                 self.gl.buffer_data_size(bind, new_length as i32 * 2, glow::STREAM_DRAW);
