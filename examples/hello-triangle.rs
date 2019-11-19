@@ -7,10 +7,11 @@ use golem::program::{Attribute, ShaderDescription};
 async fn app(window: Window, ctx: glow::Context, mut events: EventStream) -> Result<(), GolemError> {
     let mut ctx = Context::from_glow(ctx);
 
-    let vertices = &[
-        (vec2(-0.5, -0.5),  rgba(1.0, 0.0, 0.0, 1.0)),
-        (vec2(0.5, -0.5),   rgba(0.0, 1.0, 0.0, 1.0)),
-        (vec2(0.0, 0.5),    rgba(0.0, 0.0, 1.0, 1.0)),
+    let vertices = [
+        // Position         Color
+        -0.5, -0.5,         1.0, 0.0, 0.0, 1.0,
+        0.5, -0.5,          0.0, 1.0, 0.0, 1.0,
+        0.0, 0.5,           0.0, 0.0, 1.0, 1.0
     ];
 
     let vertex_input = &[
@@ -33,14 +34,7 @@ async fn app(window: Window, ctx: glow::Context, mut events: EventStream) -> Res
 
     let mut vb = ctx.new_vertex_buffer();
     let mut eb = ctx.new_element_buffer();
-    let mut builder = VertexBuilder::new(vertex_input);
-    for (pos, col) in vertices.iter() {
-        builder.start()
-            .add(pos)
-            .add(col)
-            .build();
-    }
-    vb.send_data(0, builder.data());
+    vb.send_data(0, &vertices);
     eb.send_data(0, &[0, 1, 2]);
 
     let uniforms = Uniforms::new();
