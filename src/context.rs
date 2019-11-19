@@ -55,14 +55,16 @@ impl Context {
     pub fn new_shader(&self, desc: ShaderDescription) -> Result<ShaderProgram, GolemError> {
         let gl = &self.gl;
         // TODO: check for shader creation errors
+        // TODO: OpenGL will drop unused variables, that's probably going to bite me?
         unsafe {
-            // TODO: OpenGL will drop unused variables, that's probably going to bite me?
             let vertex = gl.create_shader(glow::VERTEX_SHADER).expect("TODO");
             let vertex_source = generate_shader_text(desc.vertex_shader, desc.vertex_input, desc.fragment_input, desc.uniforms);
             gl.shader_source(vertex, &vertex_source);
             gl.compile_shader(vertex);
             println!("{}", gl.get_shader_info_log(vertex));
+
             let fragment = gl.create_shader(glow::FRAGMENT_SHADER).expect("TODO");
+            // Handle creating the output color and giving it a name, but only on desktop gl
             #[cfg(target_arch = "wasm32")]
             let (fragment_output, fragment_body) = {
                 (&[], desc.fragment_input)
@@ -76,10 +78,18 @@ impl Context {
             gl.compile_shader(fragment);
             println!("{}", gl.get_shader_info_log(fragment));
             let id = gl.create_program().expect("TODO");
+
             gl.attach_shader(id, vertex);
             gl.attach_shader(id, fragment);
+
+            // Bind the color output for desktop GL
             #[cfg(not(target_arch = "wasm32"))]
             gl.bind_frag_data_location(id, 0, "outputColor");
+
+            for (index, attr) in desc.vertex_input.iter().enumerate() {
+                gl.bind_attrib_location(id, index as u32, &attr.name);
+            }
+
             gl.link_program(id);
 
             Ok(ShaderProgram {
@@ -164,14 +174,9 @@ impl Context {
         let stride: i32 = shader.input.iter().map(|attr| attr.size).sum();
         let stride = stride * size_of::<f32>() as i32;
         let mut offset = 0;
-        for attr in shader.input.iter() {
+        for (index, attr) in shader.input.iter().enumerate() {
             unsafe {
-                let pos_attrib = self.gl.get_attrib_location(shader.id, &attr.name);
-                self.errors("location");
-                if pos_attrib < 0 {
-                    panic!("TODO Uh oh");
-                }
-                let pos_attrib = pos_attrib as u32;
+                let pos_attrib = index as u32;
                 self.gl.enable_vertex_attrib_array(pos_attrib);
                 self.errors("enable");
                 self.gl.vertex_attrib_pointer_f32(pos_attrib, attr.size as i32, attr.type_index, false, stride, offset);
