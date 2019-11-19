@@ -123,11 +123,12 @@ impl Context {
     pub(crate) fn send_data<T: bytemuck::Pod>(&self, bind: u32, length: usize, start: usize, data: &[T]) {
         use std::mem::size_of;
         let data_length = size_of::<T>() * data.len();
+        let data_start = size_of::<T>() * start;
         // TODO: sound?
         let u8_buffer = bytemuck::cast_slice(data);
         unsafe {
             if data_length + start > length {
-                let new_length = data_length + start;
+                let new_length = data_length + data_start;
                 self.gl.buffer_data_size(bind, new_length as i32 * 2, glow::STREAM_DRAW);
                 self.errors("data_size");
             }
@@ -158,8 +159,9 @@ impl Context {
         self.bind(&vb.0, glow::ARRAY_BUFFER);
         self.bind(&eb.0, glow::ELEMENT_ARRAY_BUFFER);
         self.errors("program and bind");
-        // TODO: bind attributes
-        let stride = shader.input.iter().map(|attr| attr.size).sum();
+        use std::mem::size_of;
+        let stride: i32 = shader.input.iter().map(|attr| attr.size).sum();
+        let stride = stride * size_of::<f32>() as i32;
         let mut offset = 0;
         for attr in shader.input.iter() {
             unsafe {
@@ -174,7 +176,7 @@ impl Context {
                 self.gl.vertex_attrib_pointer_f32(pos_attrib, attr.size as i32, attr.type_index, false, stride, offset);
                 self.errors("pointer");
             }
-            offset += attr.size;
+            offset += attr.size * size_of::<f32>() as i32;
         }
         self.errors("attributes");
         // TODO: bind uniforms
