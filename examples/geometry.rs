@@ -10,7 +10,9 @@ async fn app(window: Window, ctx: glow::Context, mut events: EventStream) -> Res
     let vertices = &[
         vec2(-0.5, -0.5),
         vec2(0.5, -0.5),
-        vec2(0.5, -0.5),
+        vec2(0.5, 0.5),
+        vec2(-0.5, 0.5),
+        vec2(0.0, 0.75)
     ];
 
     let vertex_input = &[
@@ -39,13 +41,13 @@ async fn app(window: Window, ctx: glow::Context, mut events: EventStream) -> Res
             .build();
     }
     vb.send_data(0, builder.data());
-    eb.send_data(0, &[0, 1, 2]);
+    eb.send_data(0, &[0, 1, 2, 0, 2, 3, 2, 3, 4]);
 
     let uniforms = Uniforms::new();
  
     while let Some(_) = events.next().await {
         ctx.clear(rgba(0.0, 0.0, 0.0, 0.0));
-        ctx.draw(&shader, &vb, &eb, &uniforms, &[0..3]);
+        ctx.draw(&shader, &vb, &eb, &uniforms, &[0..9]);
         window.present();
     }
 

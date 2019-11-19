@@ -1,4 +1,6 @@
 // TODO: maybe an enum for uniforms, attributes?
+// TODO: same array for uniforms and draw lists
+// TODO: usize draw lists
 #[derive(Debug)]
 pub struct GolemError();
 mod context;
