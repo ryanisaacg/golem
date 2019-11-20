@@ -9,9 +9,10 @@ async fn app(window: Window, ctx: glow::Context, mut events: EventStream) -> Res
 
     let image = [
         // R, G, B
-        0, 0, 0,
+        255, 255, 255,
         0, 255, 0,
         255, 0, 0,
+        255, 255, 255,
         0, 0, 255
     ];
 
@@ -42,7 +43,7 @@ async fn app(window: Window, ctx: glow::Context, mut events: EventStream) -> Res
         }"#,
         fragment_shader:
         r#" void main() {
-            gl_FragColor = texture(color, frag_uv);
+            gl_FragColor = texture(image, frag_uv);
         }"#
     })?;
 

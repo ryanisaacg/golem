@@ -106,3 +106,17 @@ impl Uniform {
         }
     }
 }
+
+impl Uniform {
+    pub(crate) fn as_glsl(&self, shader: &mut String) {
+        use UniformType::*;
+
+        shader.push_str("uniform ");
+        match self.u_type {
+            Sampler(x) => shader.push_str(&format!("sampler{}D ", x)),
+            _ => unimplemented!()
+        }
+        shader.push_str(self.name);
+        shader.push_str(";");
+    }
+}

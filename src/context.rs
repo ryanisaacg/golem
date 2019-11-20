@@ -1,6 +1,6 @@
 use glow::HasContext;
 use crate::GolemError;
-use crate::input::{Buffer, Color, ColorFormat, DrawList, ElementBuffer, Surface, Texture, VertexBuffer};
+use crate::input::{Buffer, Color, ColorFormat, DrawList, ElementBuffer, Surface, Texture, UniformValue, VertexBuffer};
 use crate::program::{Attribute, Position, Uniform, ShaderDescription, ShaderProgram};
 use std::rc::Rc;
 
@@ -22,8 +22,8 @@ fn generate_shader_text(body: &str, inputs: &[Attribute], outputs: &[Attribute],
     for attr in outputs.iter() {
         attr.as_glsl(Position::Output, &mut shader);
     }
-    for attr in uniforms.iter() {
-        //attr.as_glsl(Position::Uniform, &mut shader);
+    for uniform in uniforms.iter() {
+        uniform.as_glsl(&mut shader);
     }
     shader.push_str(body);
 
@@ -125,13 +125,32 @@ impl Context {
     }
 
     pub fn new_texture(&self, image: &[u8], width: u32, height: u32, color: ColorFormat) -> Texture {
-        // TODO
-        unimplemented!();
+        let format = match color {
+            ColorFormat::RGB => glow::RGB,
+            ColorFormat::RGBA => glow::RGBA
+        };
+        let gl = &self.gl;
+        unsafe {
+            let id = gl.create_texture().unwrap();
+            gl.bind_texture(glow::TEXTURE_2D, Some(id));
+            gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_WRAP_S, glow::CLAMP_TO_EDGE as i32);
+            gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_WRAP_T, glow::CLAMP_TO_EDGE as i32);
+            gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_MIN_FILTER, glow::LINEAR as i32);
+            gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_MAG_FILTER, glow::LINEAR as i32);
+            gl.tex_image_2d(glow::TEXTURE_2D, 0, glow::RGBA as i32, width as i32, 
+                            height as i32, 0, format, glow::UNSIGNED_BYTE, Some(image));
+            //gl.generate_mipmap(glow::TEXTURE_2D);
+            gl.bind_texture(glow::TEXTURE_2D, None);
+
+            Texture { id }
+        }
     }
 
-    pub fn bind_texture(&self, tex: &Texture, bind_point: u8) {
-        // TODO
-        unimplemented!();
+    pub fn bind_texture(&self, tex: &Texture, texture_unit: u32) {
+        unsafe {
+            self.gl.active_texture(glow::TEXTURE0 + texture_unit);
+            self.gl.bind_texture(glow::TEXTURE_2D, Some(tex.id));
+        }
     }
 
     pub(crate) fn bind(&self, buffer: &Buffer, target: u32) {
@@ -145,7 +164,6 @@ impl Context {
         use std::mem::size_of;
         let data_length = size_of::<T>() * data.len();
         let data_start = size_of::<T>() * start;
-        // TODO: sound?
         let u8_buffer = bytemuck::cast_slice(data);
         unsafe {
             if data_length + start > length {
@@ -197,8 +215,11 @@ impl Context {
             offset += size * size_of::<f32>() as i32;
         }
         self.errors("attributes");
-        // TODO: bind uniforms
         draw_list.iter().for_each(|draw_list| {
+            for (name, value) in draw_list.uniforms.iter() { 
+                let location = unsafe { self.gl.get_uniform_location(shader.id, name) };
+                self.bind_uniform(location.unwrap(), value.clone());
+            }
             let range = draw_list.range.clone();
             let length = range.end - range.start;
             unsafe {
@@ -206,6 +227,23 @@ impl Context {
             }
             self.errors("draw");
         });
+    }
+
+    fn bind_uniform(&self, location: u32, uniform: UniformValue) {
+        use UniformValue::*;
+        let location = Some(location);
+        unsafe {
+            match uniform {
+                Int(x) => self.gl.uniform_1_i32(location, x),
+                IVector2([x, y]) => self.gl.uniform_2_i32(location, x, y),
+                IVector3([x, y, z]) => self.gl.uniform_3_i32(location, x, y, z),
+                IVector4([x, y, z, w]) => self.gl.uniform_4_i32(location, x, y, z, w),
+                Float(x) => self.gl.uniform_1_f32(location, x),
+                Vector2([x, y]) => self.gl.uniform_2_f32(location, x, y),
+                Vector3([x, y, z]) => self.gl.uniform_3_f32(location, x, y, z),
+                Vector4([x, y, z, w]) => self.gl.uniform_4_f32(location, x, y, z, w),
+            }
+        }
     }
 
     fn errors(&self, label: &str) {

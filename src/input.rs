@@ -63,6 +63,7 @@ pub struct Surface {
 
 // TODO: matrix uniforms
 
+#[derive(Clone)]
 pub enum UniformValue {
     Int(i32),
     Float(f32),
@@ -87,9 +88,8 @@ impl DrawList {
         }
     }
 
-    pub fn add_uniform_binding(&mut self, name: &str, uni: UniformValue) {
-        // TODO
-        unimplemented!();
+    pub fn add_uniform_binding(&mut self, name: &'static str, uni: UniformValue) {
+        self.uniforms.push((name, uni));
     }
 }
 
