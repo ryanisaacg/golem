@@ -16,7 +16,7 @@ async fn app(window: Window, ctx: glow::Context, mut events: EventStream) -> Res
         0, 0, 255
     ];
 
-    let texture = ctx.new_texture(&image, 2, 2, ColorFormat::RGB);
+    let texture = ctx.new_texture(&image, 2, 2, ColorFormat::RGB)?;
 
     let vertices = [
         // Position         UV
@@ -47,8 +47,8 @@ async fn app(window: Window, ctx: glow::Context, mut events: EventStream) -> Res
         }"#
     })?;
 
-    let mut vb = ctx.new_vertex_buffer();
-    let mut eb = ctx.new_element_buffer();
+    let mut vb = ctx.new_vertex_buffer()?;
+    let mut eb = ctx.new_element_buffer()?;
     vb.send_data(0, &vertices);
     eb.send_data(0, &indices);
 

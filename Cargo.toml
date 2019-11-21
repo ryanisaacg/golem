@@ -7,6 +7,7 @@ edition = "2018"
 [dependencies]
 bytemuck = "1"
 glow = "0.3.0-alpha2"
+log = "0.4"
 
 [dev-dependencies]
 blinds = { version = "0.1.0-alpha2", features = ["gl"] }
