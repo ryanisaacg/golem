@@ -1,6 +1,7 @@
 use glow::HasContext;
 use crate::GolemError;
-use crate::input::{Buffer, Color, ColorFormat, DrawList, ElementBuffer, Surface, Texture, UniformValue, VertexBuffer};
+use crate::buffer::{Buffer, ElementBuffer, VertexBuffer};
+use crate::objects::{ColorFormat, DrawList, Surface, Texture, UniformValue};
 use crate::program::{Attribute, Position, Uniform, ShaderDescription, ShaderProgram};
 use std::rc::Rc;
 
@@ -184,10 +185,10 @@ impl Context {
 
     }
 
-    pub fn clear(&mut self, col: Color) {
+    pub fn clear(&mut self, r: f32, g: f32, b: f32, a: f32) {
         unsafe {
             self.gl.clear(glow::COLOR_BUFFER_BIT | glow::DEPTH_BUFFER_BIT);
-            self.gl.clear_color(col.x, col.y, col.z, col.w);
+            self.gl.clear_color(r, g, b, a);
         }
     }
 

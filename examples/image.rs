@@ -1,8 +1,8 @@
 use blinds::traits::*;
 use blinds::*;
 use golem::{Context, GolemError};
-use golem::input::{ColorFormat, DrawList, UniformValue, rgba};
-use golem::program::{Attribute, Uniform, UniformType, ShaderDescription};
+use golem::program::{Attribute, ShaderDescription, Uniform, UniformType};
+use golem::objects::{ColorFormat, DrawList, UniformValue};
 
 async fn app(window: Window, ctx: glow::Context, mut events: EventStream) -> Result<(), GolemError> {
     let mut ctx = Context::from_glow(ctx);
@@ -57,7 +57,7 @@ async fn app(window: Window, ctx: glow::Context, mut events: EventStream) -> Res
     let mut draw = DrawList::new(0..indices.len());
     draw.add_uniform_binding("image", UniformValue::Int(0));
 
-    ctx.clear(rgba(0.0, 0.0, 0.0, 0.0));
+    ctx.clear(0.0, 0.0, 0.0, 0.0);
     ctx.draw(&shader, &vb, &eb, &[draw]);
     window.present();
 

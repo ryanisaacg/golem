@@ -1,7 +1,7 @@
 use blinds::traits::*;
 use blinds::*;
 use golem::{Context, GolemError};
-use golem::input::{DrawList, rgba};
+use golem::objects::DrawList;
 use golem::program::{Attribute, ShaderDescription};
 
 async fn app(window: Window, ctx: glow::Context, mut events: EventStream) -> Result<(), GolemError> {
@@ -43,7 +43,7 @@ async fn app(window: Window, ctx: glow::Context, mut events: EventStream) -> Res
 
     let draw = DrawList::new(0..indices.len());
 
-    ctx.clear(rgba(0.0, 0.0, 0.0, 0.0));
+    ctx.clear(0.0, 0.0, 0.0, 0.0);
     ctx.draw(&shader, &vb, &eb, &[draw]);
     window.present();
 
