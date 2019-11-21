@@ -65,7 +65,6 @@ impl Context {
     pub fn new_shader(&self, desc: ShaderDescription) -> Result<ShaderProgram, GolemError> {
         let gl = &self.0.gl;
         // TODO: check for shader creation errors
-        // TODO: OpenGL will drop unused variables, that's probably going to bite me?
         unsafe {
             let vertex = gl.create_shader(glow::VERTEX_SHADER)?;
             let vertex_source = generate_shader_text(desc.vertex_shader, desc.vertex_input, desc.fragment_input, desc.uniforms);
