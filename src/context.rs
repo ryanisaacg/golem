@@ -43,7 +43,6 @@ fn generate_shader_text(body: &str, inputs: &[Attribute], outputs: &[Attribute],
 
 impl Context {
     pub fn from_glow(gl: glow::Context) -> Context {
-        // TODO: re-set this at all?
         #[cfg(not(target_arch = "wasm32"))]
         let vao = unsafe {
             let vao = gl.create_vertex_array().expect("Failed to create a VAO");
