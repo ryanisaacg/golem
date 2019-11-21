@@ -90,11 +90,10 @@ impl Attribute {
 
 pub enum NumberType { Int, Float }
 
-// TODO: handle floats v ints?
 pub enum UniformType {
     Scalar(NumberType),
     Vector(NumberType, u8),
-    Matrix(NumberType, u8, u8),
+    Matrix(u8),
     Sampler(u8),
     Array(Box<UniformType>, usize),
     UserType(String),
@@ -112,18 +111,35 @@ impl Uniform {
             u_type
         }
     }
-}
 
-impl Uniform {
     pub(crate) fn as_glsl(&self, shader: &mut String) {
-        use UniformType::*;
-
         shader.push_str("uniform ");
-        match self.u_type {
-            Sampler(x) => shader.push_str(&format!("sampler{}D ", x)),
-            _ => unimplemented!()
-        }
+        self.u_type.write_type(shader);
         shader.push_str(self.name);
         shader.push_str(";");
+    }
+}
+
+
+
+impl UniformType {
+    fn write_type(&self, shader: &mut String) {
+        use NumberType::*;
+        use UniformType::*;
+
+        match self {
+            Scalar(Int) => shader.push_str("int "),
+            Scalar(Float) => shader.push_str("float "),
+            Vector(Int, x) => shader.push_str(&format!("ivec{} ", x)),
+            Vector(Float, x) => shader.push_str(&format!("fvec{} ", x)),
+            Matrix(x) => shader.push_str(&format!("mat{} ", x)),
+            Sampler(x) => shader.push_str(&format!("sampler{}D ", x)),
+            Array(u_type, dim) => {
+                u_type.write_type(shader);
+                shader.push_str(&format!("[{}]", dim));
+            },
+            UserType(string) => shader.push_str(&string),
+        }
+
     }
 }
