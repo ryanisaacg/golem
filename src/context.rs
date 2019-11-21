@@ -5,9 +5,19 @@ use crate::objects::{ColorFormat, DrawList, Surface, Texture, UniformValue};
 use crate::program::{Attribute, Position, Uniform, ShaderDescription, ShaderProgram};
 use std::rc::Rc;
 
-pub struct Context {
-    gl: Rc<glow::Context>,
-    vao: u32 // TODO: manage this
+pub struct Context(Rc<ContextContents>);
+
+struct ContextContents {
+    gl: glow::Context,
+    vao: u32
+}
+
+impl Drop for ContextContents {
+    fn drop(&mut self) {
+        unsafe {
+            self.gl.delete_vertex_array(self.vao);
+        }
+    }
 }
 
 fn generate_shader_text(body: &str, inputs: &[Attribute], outputs: &[Attribute], uniforms: &[Uniform]) -> String {
@@ -15,7 +25,7 @@ fn generate_shader_text(body: &str, inputs: &[Attribute], outputs: &[Attribute],
 
     #[cfg(not(target_arch = "wasm32"))]
     shader.push_str("#version 150\n");
-    
+
     shader.push_str("precision mediump float;\n");
     for attr in inputs.iter() {
         attr.as_glsl(Position::Input, &mut shader);
@@ -44,17 +54,17 @@ impl Context {
         #[cfg(target_arch = "wasm32")]
         let vao = 0;
 
-        let gl = Rc::new(gl);
-
-
-        Context {
+        let contents = Rc::new(ContextContents {
             gl,
             vao
-        }
+        });
+
+
+        Context(contents)
     }
 
     pub fn new_shader(&self, desc: ShaderDescription) -> Result<ShaderProgram, GolemError> {
-        let gl = &self.gl;
+        let gl = &self.0.gl;
         // TODO: check for shader creation errors
         // TODO: OpenGL will drop unused variables, that's probably going to bite me?
         unsafe {
@@ -104,11 +114,8 @@ impl Context {
     }
 
     fn new_buffer(&self) -> Buffer {
-        let id = unsafe { self.gl.create_buffer() }.expect("TODO");
-        let ctx = Context {
-            gl: self.gl.clone(),
-            vao: 0,
-        };
+        let id = unsafe { self.0.gl.create_buffer() }.expect("TODO");
+        let ctx = Context(self.0.clone());
 
         Buffer {
             ctx,
@@ -130,7 +137,7 @@ impl Context {
             ColorFormat::RGB => glow::RGB,
             ColorFormat::RGBA => glow::RGBA
         };
-        let gl = &self.gl;
+        let gl = &self.0.gl;
         unsafe {
             let id = gl.create_texture().unwrap();
             gl.bind_texture(glow::TEXTURE_2D, Some(id));
@@ -148,36 +155,38 @@ impl Context {
     }
 
     pub fn bind_texture(&self, tex: &Texture, texture_unit: u32) {
+        let gl = &self.0.gl;
         unsafe {
-            self.gl.active_texture(glow::TEXTURE0 + texture_unit);
-            self.gl.bind_texture(glow::TEXTURE_2D, Some(tex.id));
+            gl.active_texture(glow::TEXTURE0 + texture_unit);
+            gl.bind_texture(glow::TEXTURE_2D, Some(tex.id));
         }
     }
 
     pub(crate) fn bind(&self, buffer: &Buffer, target: u32) {
         unsafe {
-            self.gl.bind_buffer(target, Some(buffer.id));
+            self.0.gl.bind_buffer(target, Some(buffer.id));
         }
         self.errors("bind_buffer");
     }
-    
+
     pub(crate) fn send_data<T: bytemuck::Pod>(&self, bind: u32, length: usize, start: usize, data: &[T]) {
         use std::mem::size_of;
         let data_length = size_of::<T>() * data.len();
         let data_start = size_of::<T>() * start;
         let u8_buffer = bytemuck::cast_slice(data);
+        let gl = &self.0.gl;
         unsafe {
             if data_length + start > length {
                 let new_length = data_length + data_start;
-                self.gl.buffer_data_size(bind, new_length as i32 * 2, glow::STREAM_DRAW);
+                gl.buffer_data_size(bind, new_length as i32 * 2, glow::STREAM_DRAW);
                 self.errors("data_size");
             }
-            self.gl.buffer_sub_data_u8_slice(bind, start as i32, u8_buffer);
+            gl.buffer_sub_data_u8_slice(bind, start as i32, u8_buffer);
             self.errors("u8_slice");
         };
     }
 
-    pub fn set_target(&mut self, surface: &Surface) {
+    pub fn set_target(&mut self, _surface: &Surface) {
         unimplemented!();
     }
 
@@ -186,16 +195,18 @@ impl Context {
     }
 
     pub fn clear(&mut self, r: f32, g: f32, b: f32, a: f32) {
+        let gl = &self.0.gl;
         unsafe {
-            self.gl.clear(glow::COLOR_BUFFER_BIT | glow::DEPTH_BUFFER_BIT);
-            self.gl.clear_color(r, g, b, a);
+            gl.clear(glow::COLOR_BUFFER_BIT | glow::DEPTH_BUFFER_BIT);
+            gl.clear_color(r, g, b, a);
         }
     }
 
     // TODO: API allow glow::LINES
     pub fn draw(&mut self, shader: &ShaderProgram, vb: &VertexBuffer, eb: &ElementBuffer, draw_list: &[DrawList]) {
+        let gl = &self.0.gl;
         unsafe {
-            self.gl.use_program(Some(shader.id));
+            gl.use_program(Some(shader.id));
         }
         self.bind(&vb.0, glow::ARRAY_BUFFER);
         self.bind(&eb.0, glow::ELEMENT_ARRAY_BUFFER);
@@ -208,9 +219,9 @@ impl Context {
             let size = attr.size();
             unsafe {
                 let pos_attrib = index as u32;
-                self.gl.enable_vertex_attrib_array(pos_attrib);
+                gl.enable_vertex_attrib_array(pos_attrib);
                 self.errors("enable");
-                self.gl.vertex_attrib_pointer_f32(pos_attrib, size, glow::FLOAT, false, stride, offset);
+                gl.vertex_attrib_pointer_f32(pos_attrib, size, glow::FLOAT, false, stride, offset);
                 self.errors("pointer");
             }
             offset += size * size_of::<f32>() as i32;
@@ -218,13 +229,13 @@ impl Context {
         self.errors("attributes");
         draw_list.iter().for_each(|draw_list| {
             for (name, value) in draw_list.uniforms.iter() { 
-                let location = unsafe { self.gl.get_uniform_location(shader.id, name) };
+                let location = unsafe { gl.get_uniform_location(shader.id, name) };
                 self.bind_uniform(location.unwrap(), value.clone());
             }
             let range = draw_list.range.clone();
             let length = range.end - range.start;
             unsafe {
-                self.gl.draw_elements(glow::TRIANGLES, length as i32, glow::UNSIGNED_INT, range.start as i32);
+                gl.draw_elements(glow::TRIANGLES, length as i32, glow::UNSIGNED_INT, range.start as i32);
             }
             self.errors("draw");
         });
@@ -233,16 +244,17 @@ impl Context {
     fn bind_uniform(&self, location: u32, uniform: UniformValue) {
         use UniformValue::*;
         let location = Some(location);
+        let gl = &self.0.gl;
         unsafe {
             match uniform {
-                Int(x) => self.gl.uniform_1_i32(location, x),
-                IVector2([x, y]) => self.gl.uniform_2_i32(location, x, y),
-                IVector3([x, y, z]) => self.gl.uniform_3_i32(location, x, y, z),
-                IVector4([x, y, z, w]) => self.gl.uniform_4_i32(location, x, y, z, w),
-                Float(x) => self.gl.uniform_1_f32(location, x),
-                Vector2([x, y]) => self.gl.uniform_2_f32(location, x, y),
-                Vector3([x, y, z]) => self.gl.uniform_3_f32(location, x, y, z),
-                Vector4([x, y, z, w]) => self.gl.uniform_4_f32(location, x, y, z, w),
+                Int(x) => gl.uniform_1_i32(location, x),
+                IVector2([x, y]) => gl.uniform_2_i32(location, x, y),
+                IVector3([x, y, z]) => gl.uniform_3_i32(location, x, y, z),
+                IVector4([x, y, z, w]) => gl.uniform_4_i32(location, x, y, z, w),
+                Float(x) => gl.uniform_1_f32(location, x),
+                Vector2([x, y]) => gl.uniform_2_f32(location, x, y),
+                Vector3([x, y, z]) => gl.uniform_3_f32(location, x, y, z),
+                Vector4([x, y, z, w]) => gl.uniform_4_f32(location, x, y, z, w),
             }
         }
     }
@@ -250,7 +262,7 @@ impl Context {
     fn errors(&self, label: &str) {
         let mut any = false;
         loop {
-            let error = unsafe { self.gl.get_error() };
+            let error = unsafe { self.0.gl.get_error() };
             let text = match error {
                 0 => break,
                 glow::INVALID_ENUM => "Invalid enum",
