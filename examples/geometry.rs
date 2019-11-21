@@ -39,7 +39,7 @@ async fn app(window: Window, ctx: glow::Context, mut events: EventStream) -> Res
 
     let mut vb = ctx.new_vertex_buffer()?;
     let mut eb = ctx.new_element_buffer()?;
-    vb.send_data(0, &vertices);
+    vb.send_data(1, &vertices[1..]);
     eb.send_data(0, &indices);
 
     let mut draw = DrawList::new(0..indices.len());
