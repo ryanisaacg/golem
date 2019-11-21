@@ -28,3 +28,9 @@ impl Buffer {
         self.ctx.send_data(bind, self.length, start, data);
     }
 }
+
+impl Drop for Buffer {
+    fn drop(&mut self) {
+        self.ctx.delete_buffer(self.id);
+    }
+}

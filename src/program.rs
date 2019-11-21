@@ -7,10 +7,17 @@ pub struct ShaderDescription<'a> {
 }
 
 pub struct ShaderProgram {
+    pub(crate) ctx: crate::Context,
     pub(crate) id: u32,
     pub(crate) vertex: u32,
     pub(crate) fragment: u32,
     pub(crate) input: Vec<Attribute>,
+}
+
+impl Drop for ShaderProgram {
+    fn drop(&mut self) {
+        self.ctx.delete_shader(self.id, self.vertex, self.fragment);
+    }
 }
 
 #[derive(Clone)]

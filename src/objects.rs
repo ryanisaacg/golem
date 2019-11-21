@@ -1,12 +1,28 @@
+use crate::Context;
 use std::ops::Range;
 
 pub struct Texture {
+    pub(crate) ctx: Context,
     pub(crate) id: u32
 }
 
+impl Drop for Texture {
+    fn drop(&mut self) {
+        self.ctx.delete_texture(self.id);
+    }
+}
+
 pub struct Surface {
+    pub(crate) ctx: Context,
     pub(crate) id: u32
 }
+
+impl Drop for Surface {
+    fn drop(&mut self) {
+        self.ctx.delete_surface(self.id);
+    }
+}
+
 
 // TODO: matrix uniforms
 

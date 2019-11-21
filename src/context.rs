@@ -105,6 +105,7 @@ impl Context {
             gl.link_program(id);
 
             Ok(ShaderProgram {
+                ctx: Context(self.0.clone()),
                 id,
                 vertex,
                 fragment,
@@ -145,12 +146,15 @@ impl Context {
             gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_WRAP_T, glow::CLAMP_TO_EDGE as i32);
             gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_MIN_FILTER, glow::LINEAR as i32);
             gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_MAG_FILTER, glow::LINEAR as i32);
-            gl.tex_image_2d(glow::TEXTURE_2D, 0, glow::RGBA as i32, width as i32, 
+            gl.tex_image_2d(glow::TEXTURE_2D, 0, glow::RGBA as i32, width as i32,
                             height as i32, 0, format, glow::UNSIGNED_BYTE, Some(image));
             //gl.generate_mipmap(glow::TEXTURE_2D);
             gl.bind_texture(glow::TEXTURE_2D, None);
 
-            Texture { id }
+            Texture {
+                ctx: Context(self.0.clone()),
+                id,
+            }
         }
     }
 
@@ -276,5 +280,30 @@ impl Context {
         if any {
             println!("{} errors complete", label);
         }
+    }
+
+    pub(crate) fn delete_shader(&self, id: u32, fragment: u32, vertex: u32) {
+        let gl = &self.0.gl;
+        unsafe {
+            gl.delete_program(id);
+            gl.delete_shader(fragment);
+            gl.delete_shader(vertex);
+        }
+    }
+
+    pub(crate) fn delete_buffer(&self, id: u32) {
+        unsafe {
+            self.0.gl.delete_buffer(id);
+        }
+    }
+
+    pub(crate) fn delete_texture(&self, id: u32) {
+        unsafe {
+            self.0.gl.delete_texture(id);
+        }
+    }
+
+    pub(crate) fn delete_surface(&self, _id: u32) {
+        unimplemented!();
     }
 }
