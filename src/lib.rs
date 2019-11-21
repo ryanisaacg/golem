@@ -1,4 +1,3 @@
-// TODO: should there be a vertex-safe way of inserting stuff into the VBO?
 // TODO: validate vec and matrix dimensions
 
 pub mod buffer;
