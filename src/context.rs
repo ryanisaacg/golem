@@ -285,6 +285,9 @@ impl Context {
                 Vector2([x, y]) => gl.uniform_2_f32(location, x, y),
                 Vector3([x, y, z]) => gl.uniform_3_f32(location, x, y, z),
                 Vector4([x, y, z, w]) => gl.uniform_4_f32(location, x, y, z, w),
+                Matrix2(mat) => gl.uniform_matrix_2_f32_slice(location, false, &mat),
+                Matrix3(mat) => gl.uniform_matrix_3_f32_slice(location, false, &mat),
+                Matrix4(mat) => gl.uniform_matrix_4_f32_slice(location, false, &mat),
             }
         }
     }

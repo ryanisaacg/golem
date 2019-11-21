@@ -24,8 +24,6 @@ impl Drop for Surface {
 }
 
 
-// TODO: matrix uniforms
-
 #[derive(Clone)]
 pub enum UniformValue {
     Int(i32),
@@ -36,6 +34,9 @@ pub enum UniformValue {
     IVector2([i32; 2]),
     IVector3([i32; 3]),
     IVector4([i32; 4]),
+    Matrix2([f32; 4]),
+    Matrix3([f32; 9]),
+    Matrix4([f32; 16]),
 }
 
 pub struct DrawList {
