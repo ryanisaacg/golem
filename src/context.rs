@@ -222,7 +222,6 @@ impl Context {
         }
     }
 
-    // TODO: API allow glow::LINES
     pub fn draw(&mut self, shader: &ShaderProgram, vb: &VertexBuffer, eb: &ElementBuffer, draw_list: &[DrawList]) {
         let gl = &self.0.gl;
         log::trace!("Setting up the shader and buffers to draw");
@@ -255,8 +254,18 @@ impl Context {
             log::trace!("Dispatching draw commands");
             let range = draw_list.range.clone();
             let length = range.end - range.start;
+            use crate::objects::GeometryType::*;
+            let shape_type = match draw_list.geometry {
+                Points => glow::POINTS,
+                Lines => glow::LINES,
+                LineStrip => glow::LINE_STRIP,
+                LineLoop => glow::LINE_LOOP,
+                TriangleStrip => glow::TRIANGLE_STRIP,
+                TriangleFan => glow::TRIANGLE_FAN,
+                Triangles => glow::TRIANGLES,
+            };
             unsafe {
-                gl.draw_elements(glow::TRIANGLES, length as i32, glow::UNSIGNED_INT, range.start as i32);
+                gl.draw_elements(shape_type, length as i32, glow::UNSIGNED_INT, range.start as i32);
             }
         });
     }

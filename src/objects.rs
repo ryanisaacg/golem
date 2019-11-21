@@ -40,22 +40,32 @@ pub enum UniformValue {
 
 pub struct DrawList {
     pub(crate) range: Range<usize>,
-    pub(crate) uniforms: Vec<(&'static str, UniformValue)>
+    pub(crate) uniforms: Vec<(&'static str, UniformValue)>,
+    pub(crate) geometry: GeometryType,
 }
 
 impl DrawList {
     pub fn new(range: Range<usize>) -> DrawList {
         DrawList {
             range,
-            uniforms: Vec::new()
+            uniforms: Vec::new(),
+            geometry: GeometryType::Triangles,
         }
     }
 
     pub fn add_uniform_binding(&mut self, name: &'static str, uni: UniformValue) {
         self.uniforms.push((name, uni));
     }
+
+    pub fn set_geometry_type(&mut self, geom_type: GeometryType) {
+        self.geometry = geom_type;
+    }
 }
 
 pub enum ColorFormat {
     RGB, RGBA
+}
+
+pub enum GeometryType {
+    Points, Lines, LineStrip, LineLoop, TriangleStrip, TriangleFan, Triangles
 }
