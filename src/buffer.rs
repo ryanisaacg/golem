@@ -25,7 +25,7 @@ pub(crate) struct Buffer {
 impl Buffer {
     fn send_data<T: bytemuck::Pod>(&mut self, bind: u32, start: usize, data: &[T]) {
         self.ctx.bind(self, bind);
-        self.ctx.send_data(bind, self.length, start, data);
+        self.ctx.send_data(bind, &mut self.length, start, data);
     }
 }
 

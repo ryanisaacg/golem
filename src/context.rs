@@ -190,17 +190,18 @@ impl Context {
         }
     }
 
-    pub(crate) fn send_data<T: bytemuck::Pod>(&self, bind: u32, length: usize, start: usize, data: &[T]) {
+    pub(crate) fn send_data<T: bytemuck::Pod>(&self, bind: u32, length: &mut usize, start: usize, data: &[T]) {
         use std::mem::size_of;
-        let data_length = size_of::<T>() * data.len();
         let data_start = size_of::<T>() * start;
         let u8_buffer = bytemuck::cast_slice(data);
+        let data_length = u8_buffer.len();
         let gl = &self.0.gl;
         unsafe {
-            if data_length + start > length {
+            if data_length + start >= *length {
                 log::trace!("Resizing buffer to hold new data");
-                let new_length = data_length + data_start;
-                gl.buffer_data_size(bind, new_length as i32 * 2, glow::STREAM_DRAW);
+                let new_length = (data_length + data_start) * 2;
+                gl.buffer_data_size(bind, new_length as i32, glow::STREAM_DRAW);
+                *length = new_length;
             }
             gl.buffer_sub_data_u8_slice(bind, start as i32, u8_buffer);
         };
