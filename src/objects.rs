@@ -56,7 +56,6 @@ impl DrawList {
     }
 }
 
-// TODO: BGR, BGRA?
 pub enum ColorFormat {
     RGB, RGBA
 }
