@@ -165,8 +165,7 @@ impl Context {
             gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_MAG_FILTER, glow::LINEAR as i32);
             gl.tex_image_2d(glow::TEXTURE_2D, 0, glow::RGBA as i32, width as i32,
                             height as i32, 0, format, glow::UNSIGNED_BYTE, Some(image));
-            // TODO: is this important
-            //gl.generate_mipmap(glow::TEXTURE_2D);
+            gl.generate_mipmap(glow::TEXTURE_2D);
             gl.bind_texture(glow::TEXTURE_2D, None);
 
             Ok(Texture {
