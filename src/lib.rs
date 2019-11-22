@@ -1,4 +1,5 @@
 // TODO: validate vec and matrix dimensions
+// TODO: add out-of-memory to GolemError?
 
 pub mod buffer;
 pub mod objects;
