@@ -5,6 +5,16 @@ pub struct Texture {
     pub(crate) id: u32
 }
 
+impl Texture {
+    pub fn id(&self) -> u32 {
+        self.id
+    }
+
+    pub fn bind(&self, bind_point: u32) {
+        self.ctx.bind_texture(self.id, bind_point);
+    }
+}
+
 impl Drop for Texture {
     fn drop(&mut self) {
         self.ctx.delete_texture(self.id);

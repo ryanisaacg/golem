@@ -177,11 +177,11 @@ impl Context {
         }
     }
 
-    pub fn bind_texture(&self, tex: &Texture, texture_unit: u32) {
+    pub(crate) fn bind_texture(&self, id: u32, texture_unit: u32) {
         let gl = &self.0.gl;
         unsafe {
             gl.active_texture(glow::TEXTURE0 + texture_unit);
-            gl.bind_texture(glow::TEXTURE_2D, Some(tex.id));
+            gl.bind_texture(glow::TEXTURE_2D, Some(id));
         }
     }
 
