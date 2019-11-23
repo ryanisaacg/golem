@@ -1,15 +1,16 @@
 use glow::HasContext;
 use crate::GolemError;
 use crate::buffer::{Buffer, ElementBuffer, VertexBuffer};
-use crate::objects::{ColorFormat, DrawList, Surface, Texture, UniformValue};
+use crate::objects::{ColorFormat, GeometryType, Surface, Texture, UniformValue};
 use crate::program::{Attribute, Position, Uniform, ShaderDescription, ShaderProgram};
+use std::ops::Range;
 use std::rc::Rc;
 
 pub struct Context(Rc<ContextContents>);
 
 struct ContextContents {
     gl: glow::Context,
-    vao: u32
+    vao: u32,
 }
 
 impl Drop for ContextContents {
@@ -55,7 +56,7 @@ impl Context {
 
         let contents = Rc::new(ContextContents {
             gl,
-            vao
+            vao,
         });
 
 
@@ -223,20 +224,19 @@ impl Context {
         }
     }
 
-    pub fn draw(&mut self, shader: &ShaderProgram, vb: &VertexBuffer, eb: &ElementBuffer, draw_list: &[DrawList]) {
+    pub(crate) fn bind_program(&mut self, id: u32, input: &Vec<Attribute>, vb: &VertexBuffer) {
         let gl = &self.0.gl;
-        log::trace!("Setting up the shader and buffers to draw");
+        log::trace!("Binding the shader and buffers");
         unsafe {
-            gl.use_program(Some(shader.id));
+            gl.use_program(Some(id));
         }
         self.bind(&vb.0, glow::ARRAY_BUFFER);
-        self.bind(&eb.0, glow::ELEMENT_ARRAY_BUFFER);
         use std::mem::size_of;
-        let stride: i32 = shader.input.iter().map(|attr| attr.size()).sum();
+        let stride: i32 = input.iter().map(|attr| attr.size()).sum();
         let stride = stride * size_of::<f32>() as i32;
         let mut offset = 0;
         log::trace!("Binding the attributes to draw");
-        for (index, attr) in shader.input.iter().enumerate() {
+        for (index, attr) in input.iter().enumerate() {
             let size = attr.size();
             unsafe {
                 let pos_attrib = index as u32;
@@ -245,18 +245,28 @@ impl Context {
             }
             offset += size * size_of::<f32>() as i32;
         }
-        log::trace!("Beginning draw calls");
-        draw_list.iter().for_each(|draw_list| {
-            log::trace!("Binding uniform values");
-            for (name, value) in draw_list.uniforms.iter() { 
-                let location = unsafe { gl.get_uniform_location(shader.id, name) };
-                self.bind_uniform(location.expect("Generated uniform was not found in shader"), value.clone());
-            }
-            log::trace!("Dispatching draw commands");
-            let range = draw_list.range.clone();
+    }
+
+    pub(crate) fn is_program_bound(&self, id: u32) -> bool {
+        unsafe {
+            self.0.gl.get_parameter_i32(glow::CURRENT_PROGRAM) == id as i32
+        }
+    }
+
+    pub fn draw(&mut self, eb: &ElementBuffer, range: Range<usize>) -> Result<(), GolemError> {
+        self.draw_with_type(eb, range, GeometryType::Triangles)
+    }
+
+    pub fn draw_with_type(&mut self, eb: &ElementBuffer, range: Range<usize>, geometry: GeometryType) -> Result<(), GolemError> {
+        let program = unsafe { self.0.gl.get_parameter_i32(glow::CURRENT_PROGRAM) };
+        if program == 0 {
+            Err(GolemError::NoBoundProgram)
+        } else {
+            self.bind(&eb.0, glow::ELEMENT_ARRAY_BUFFER);
+            log::trace!("Dispatching draw command");
             let length = range.end - range.start;
-            use crate::objects::GeometryType::*;
-            let shape_type = match draw_list.geometry {
+            use GeometryType::*;
+            let shape_type = match geometry {
                 Points => glow::POINTS,
                 Lines => glow::LINES,
                 LineStrip => glow::LINE_STRIP,
@@ -266,15 +276,18 @@ impl Context {
                 Triangles => glow::TRIANGLES,
             };
             unsafe {
-                gl.draw_elements(shape_type, length as i32, glow::UNSIGNED_INT, range.start as i32);
+                self.0.gl.draw_elements(shape_type, length as i32, glow::UNSIGNED_INT, range.start as i32);
             }
-        });
+
+            Ok(())
+        }
     }
 
-    fn bind_uniform(&self, location: u32, uniform: UniformValue) {
-        use UniformValue::*;
-        let location = Some(location);
+
+    pub(crate) fn bind_uniform(&self, id: u32, name: &str, uniform: UniformValue) -> Result<(), GolemError> {
         let gl = &self.0.gl;
+        let location = unsafe { gl.get_uniform_location(id, name) };
+        use UniformValue::*;
         unsafe {
             match uniform {
                 Int(x) => gl.uniform_1_i32(location, x),
@@ -290,6 +303,8 @@ impl Context {
                 Matrix4(mat) => gl.uniform_matrix_4_f32_slice(location, false, &mat),
             }
         }
+
+        Ok(())
     }
 
     pub(crate) fn delete_shader(&self, id: u32, fragment: u32, vertex: u32) {

@@ -1,3 +1,7 @@
+use crate::GolemError;
+use crate::buffer::VertexBuffer;
+use crate::objects::UniformValue;
+
 pub struct ShaderDescription<'a> {
     pub vertex_input: &'a [Attribute],
     pub fragment_input: &'a [Attribute],
@@ -12,6 +16,24 @@ pub struct ShaderProgram {
     pub(crate) vertex: u32,
     pub(crate) fragment: u32,
     pub(crate) input: Vec<Attribute>,
+}
+
+impl ShaderProgram {
+    pub fn is_bound(&self) -> bool {
+        self.ctx.is_program_bound(self.id)
+    }
+
+    pub fn set_uniform(&self, name: &str, uniform: UniformValue) -> Result<(), GolemError> {
+        if self.is_bound() {
+            self.ctx.bind_uniform(self.id, name, uniform)
+        } else {
+            Err(GolemError::NotCurrentProgram)
+        }
+    }
+
+    pub fn bind(&mut self, vb: &VertexBuffer) {
+        self.ctx.bind_program(self.id, &self.input, vb);
+    }
 }
 
 impl Drop for ShaderProgram {
