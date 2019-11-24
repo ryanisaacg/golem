@@ -207,6 +207,10 @@ impl Context {
         };
     }
 
+    pub fn new_surface(&mut self, _width: u32, _height: u32, _format: ColorFormat) -> Surface {
+        unimplemented!();
+    }
+
     pub fn set_target(&mut self, _surface: &Surface) {
         unimplemented!();
     }

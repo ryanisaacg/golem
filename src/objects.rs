@@ -23,7 +23,8 @@ impl Drop for Texture {
 
 pub struct Surface {
     pub(crate) ctx: Context,
-    pub(crate) id: u32
+    pub(crate) id: u32,
+    pub(crate) texture: Texture
 }
 
 impl Drop for Surface {
