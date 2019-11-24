@@ -193,24 +193,22 @@ impl Context {
         }
     }
 
-    pub(crate) fn send_data<T: bytemuck::Pod>(&self, buffer: &mut BufferContents, target: u32, start: usize, data: &[T]) {
-        let data_start = size_of::<T>() * start;
+    pub(crate) fn set_data<T: bytemuck::Pod>(&self, buffer: &mut BufferContents, target: u32, data: &[T]) {
         let u8_buffer = bytemuck::cast_slice(data);
         let data_length = u8_buffer.len();
+        self.bind(buffer, target);
         let gl = &self.0.gl;
-        if data_length + data_start >= buffer.length {
+        if data_length >= buffer.length {
             log::trace!("Resizing buffer to hold new data");
-            let new_length = (data_length + data_start) * 2;
-            self.ctx.bind(buffer, glow::COPY_READ_BUFFER);
+            let new_length = data_length * 2;
             unsafe {
                 gl.buffer_data_size(target, new_length as i32, glow::STREAM_DRAW);
             }
             buffer.length = new_length;
         }
         log::trace!("Writing data to OpenGL buffer");
-        self.ctx.bind(buffer, target);
         unsafe {
-            gl.buffer_sub_data_u8_slice(target, start as i32, u8_buffer);
+            gl.buffer_sub_data_u8_slice(target, 0, u8_buffer);
         }
     }
 
@@ -240,8 +238,7 @@ impl Context {
         unsafe {
             gl.use_program(Some(id));
         }
-        self.bind(&vb.0, glow::ARRAY_BUFFER);
-        use std::mem::size_of;
+        self.bind(&vb.0.contents, glow::ARRAY_BUFFER);
         let stride: i32 = input.iter().map(|attr| attr.size()).sum();
         let stride = stride * size_of::<f32>() as i32;
         let mut offset = 0;
@@ -272,7 +269,7 @@ impl Context {
         if program == 0 {
             Err(GolemError::NoBoundProgram)
         } else {
-            self.bind(&eb.0, glow::ELEMENT_ARRAY_BUFFER);
+            self.bind(&eb.0.contents, glow::ELEMENT_ARRAY_BUFFER);
             log::trace!("Dispatching draw command");
             let length = range.end - range.start;
             use GeometryType::*;
@@ -326,9 +323,9 @@ impl Context {
         }
     }
 
-    pub(crate) fn delete_buffer(&self, id: u32) {
+    pub(crate) fn delete_buffer(&self, contents: &BufferContents) {
         unsafe {
-            self.0.gl.delete_buffer(id);
+            self.0.gl.delete_buffer(contents.id);
         }
     }
 

@@ -3,16 +3,16 @@ use crate::Context;
 pub struct VertexBuffer(pub(crate) Buffer);
 
 impl VertexBuffer {
-    pub fn send_data(&mut self, start: usize, data: &[f32]) {
-        self.0.send_data(glow::ARRAY_BUFFER, start, data);
+    pub fn set_data(&mut self, data: &[f32]) {
+        self.0.set_data(glow::ARRAY_BUFFER, data);
     }
 }
 
 pub struct ElementBuffer(pub(crate) Buffer);
 
 impl ElementBuffer {
-    pub fn send_data(&mut self, start: usize, data: &[u32]) {
-        self.0.send_data(glow::ELEMENT_ARRAY_BUFFER, start, data);
+    pub fn set_data(&mut self, data: &[u32]) {
+        self.0.set_data(glow::ELEMENT_ARRAY_BUFFER, data);
     }
 }
 
@@ -27,13 +27,13 @@ pub(crate) struct BufferContents {
 }
 
 impl Buffer {
-    fn send_data<T: bytemuck::Pod>(&mut self, target: u32, start: usize, data: &[T]) {
-        self.ctx.send_data(&mut self.contents, target, start, data);
+    fn set_data<T: bytemuck::Pod>(&mut self, target: u32, data: &[T]) {
+        self.ctx.set_data(&mut self.contents, target, data);
     }
 }
 
 impl Drop for Buffer {
     fn drop(&mut self) {
-        self.ctx.delete_buffer(self.id);
+        self.ctx.delete_buffer(&self.contents);
     }
 }

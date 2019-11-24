@@ -33,8 +33,8 @@ async fn app(window: Window, ctx: glow::Context, mut events: EventStream) -> Res
 
     let mut vb = ctx.new_vertex_buffer()?;
     let mut eb = ctx.new_element_buffer()?;
-    vb.send_data(0, &vertices);
-    eb.send_data(0, &indices);
+    vb.set_data(&vertices);
+    eb.set_data(&indices);
     shader.bind(&vb);
 
     ctx.clear(0.0, 0.0, 0.0, 0.0);
