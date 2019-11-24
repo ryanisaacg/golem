@@ -18,14 +18,17 @@ impl ElementBuffer {
 
 pub(crate) struct Buffer {
     pub(crate) ctx: Context,
+    pub(crate) contents: BufferContents,
+}
+
+pub(crate) struct BufferContents {
     pub(crate) id: u32,
-    pub(crate) length: usize
+    pub(crate) length: usize,
 }
 
 impl Buffer {
-    fn send_data<T: bytemuck::Pod>(&mut self, bind: u32, start: usize, data: &[T]) {
-        self.ctx.bind(self, bind);
-        self.ctx.send_data(bind, &mut self.length, start, data);
+    fn send_data<T: bytemuck::Pod>(&mut self, target: u32, start: usize, data: &[T]) {
+        self.ctx.send_data(&mut self.contents, target, start, data);
     }
 }
 
