@@ -1,4 +1,4 @@
-use crate::Context;
+use crate::{Context, GlBuffer};
 
 pub struct VertexBuffer(pub(crate) Buffer);
 
@@ -22,7 +22,7 @@ pub(crate) struct Buffer {
 }
 
 pub(crate) struct BufferContents {
-    pub(crate) id: u32,
+    pub(crate) id: GlBuffer,
     pub(crate) length: usize,
 }
 

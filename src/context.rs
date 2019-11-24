@@ -1,5 +1,5 @@
 use glow::HasContext;
-use crate::GolemError;
+use crate::{GolemError, GlFramebuffer, GlProgram, GlShader, GlTexture};
 use crate::buffer::{Buffer, BufferContents, ElementBuffer, VertexBuffer};
 use crate::objects::{ColorFormat, GeometryType, Surface, Texture, UniformValue};
 use crate::program::{Attribute, Position, Uniform, ShaderDescription, ShaderProgram};
@@ -11,18 +11,20 @@ pub struct Context(Rc<ContextContents>);
 
 struct ContextContents {
     gl: glow::Context,
+    #[cfg(not(target_arch = "wasm32"))]
     vao: u32,
 }
 
 impl Drop for ContextContents {
     fn drop(&mut self) {
+        #[cfg(not(target_arch = "wasm32"))]
         unsafe {
             self.gl.delete_vertex_array(self.vao);
         }
     }
 }
 
-fn generate_shader_text(body: &str, inputs: &[Attribute], outputs: &[Attribute], uniforms: &[Uniform]) -> String {
+fn generate_shader_text(is_vertex: bool, body: &str, inputs: &[Attribute], outputs: &[Attribute], uniforms: &[Uniform]) -> String {
     let mut shader = String::new();
 
     #[cfg(not(target_arch = "wasm32"))]
@@ -30,10 +32,10 @@ fn generate_shader_text(body: &str, inputs: &[Attribute], outputs: &[Attribute],
 
     shader.push_str("precision mediump float;\n");
     for attr in inputs.iter() {
-        attr.as_glsl(Position::Input, &mut shader);
+        attr.as_glsl(is_vertex, Position::Input, &mut shader);
     }
     for attr in outputs.iter() {
-        attr.as_glsl(Position::Output, &mut shader);
+        attr.as_glsl(is_vertex, Position::Output, &mut shader);
     }
     for uniform in uniforms.iter() {
         uniform.as_glsl(&mut shader);
@@ -52,11 +54,13 @@ impl Context {
 
             vao
         };
-        #[cfg(target_arch = "wasm32")]
-        let vao = 0;
+
+        // Set the default clear color to (0, 0, 0, 1)
+        unsafe { gl.clear_color(0.0, 0.0, 0.0, 1.0) };
 
         let contents = Rc::new(ContextContents {
             gl,
+            #[cfg(not(target_arch = "wasm32"))]
             vao,
         });
 
@@ -68,7 +72,7 @@ impl Context {
         let gl = &self.0.gl;
         unsafe {
             let vertex = gl.create_shader(glow::VERTEX_SHADER)?;
-            let vertex_source = generate_shader_text(desc.vertex_shader, desc.vertex_input, desc.fragment_input, desc.uniforms);
+            let vertex_source = generate_shader_text(true, desc.vertex_shader, desc.vertex_input, desc.fragment_input, desc.uniforms);
             log::debug!("Vertex shader source: {}", vertex_source);
             gl.shader_source(vertex, &vertex_source);
             gl.compile_shader(vertex);
@@ -83,13 +87,13 @@ impl Context {
             // Handle creating the output color and giving it a name, but only on desktop gl
             #[cfg(target_arch = "wasm32")]
             let (fragment_output, fragment_body) = {
-                (&[], desc.fragment_input)
+                (&[], desc.fragment_shader)
             };
             #[cfg(not(target_arch = "wasm32"))]
             let (fragment_output, fragment_body) = {
                 (&[ Attribute::Vector(4, "outputColor") ], &desc.fragment_shader.replace("gl_FragColor", "outputColor"))
             };
-            let fragment_source = generate_shader_text(fragment_body, desc.fragment_input, fragment_output, desc.uniforms);
+            let fragment_source = generate_shader_text(false, fragment_body, desc.fragment_input, fragment_output, desc.uniforms);
             log::debug!("Fragment shader source: {}", vertex_source);
             gl.shader_source(fragment, &fragment_source);
             gl.compile_shader(fragment);
@@ -161,8 +165,8 @@ impl Context {
         };
         let gl = &self.0.gl;
         unsafe {
-            let id = gl.create_texture()?;
-            gl.bind_texture(glow::TEXTURE_2D, Some(id));
+            let tex = gl.create_texture()?;
+            gl.bind_texture(glow::TEXTURE_2D, Some(tex));
             gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_WRAP_S, glow::CLAMP_TO_EDGE as i32);
             gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_WRAP_T, glow::CLAMP_TO_EDGE as i32);
             gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_MIN_FILTER, glow::LINEAR as i32);
@@ -171,15 +175,13 @@ impl Context {
                             height as i32, 0, format, glow::UNSIGNED_BYTE, Some(image));
             gl.generate_mipmap(glow::TEXTURE_2D);
             gl.bind_texture(glow::TEXTURE_2D, None);
-
-            Ok(Texture {
-                ctx: Context(self.0.clone()),
-                id,
-            })
+            let ctx = Context(self.0.clone());
+            
+            Ok(Texture::new(ctx, tex))
         }
     }
 
-    pub(crate) fn bind_texture(&self, id: u32, texture_unit: u32) {
+    pub(crate) fn bind_texture(&self, id: GlTexture, texture_unit: u32) {
         let gl = &self.0.gl;
         unsafe {
             gl.active_texture(glow::TEXTURE0 + texture_unit);
@@ -212,27 +214,32 @@ impl Context {
         }
     }
 
-    pub fn new_surface(&mut self, _width: u32, _height: u32, _format: ColorFormat) -> Surface {
+    pub fn new_surface(&self, _width: u32, _height: u32, _format: ColorFormat) -> Surface {
         unimplemented!();
     }
 
-    pub fn set_target(&mut self, _surface: &Surface) {
+    pub fn set_target(&self, _surface: &Surface) {
         unimplemented!();
     }
 
-    pub fn reset_target(&mut self) {
+    pub fn reset_target(&self) {
         unimplemented!();
     }
 
-    pub fn clear(&mut self, r: f32, g: f32, b: f32, a: f32) {
-        let gl = &self.0.gl;
+    pub fn set_clear_color(&self, r: f32, g: f32, b: f32, a: f32) {
         unsafe {
-            gl.clear(glow::COLOR_BUFFER_BIT | glow::DEPTH_BUFFER_BIT);
-            gl.clear_color(r, g, b, a);
+            self.0.gl.clear_color(r, g, b, a);
         }
     }
 
-    pub(crate) fn bind_program(&mut self, id: u32, input: &Vec<Attribute>, vb: &VertexBuffer) {
+    pub fn clear(&self) {
+        let gl = &self.0.gl;
+        unsafe {
+            gl.clear(glow::COLOR_BUFFER_BIT | glow::DEPTH_BUFFER_BIT);
+        }
+    }
+
+    pub(crate) fn bind_program(&self, id: GlProgram, input: &Vec<Attribute>, vb: &VertexBuffer) {
         let gl = &self.0.gl;
         log::trace!("Binding the shader and buffers");
         unsafe {
@@ -254,18 +261,21 @@ impl Context {
         }
     }
 
-    pub(crate) fn is_program_bound(&self, id: u32) -> bool {
-        unsafe {
+    pub(crate) fn is_program_bound(&self, id: GlProgram) -> bool {
+        // TODO: web implementation
+        true
+        /*unsafe {
             self.0.gl.get_parameter_i32(glow::CURRENT_PROGRAM) == id as i32
-        }
+        }*/
     }
 
-    pub fn draw(&mut self, eb: &ElementBuffer, range: Range<usize>) -> Result<(), GolemError> {
+    pub fn draw(&self, eb: &ElementBuffer, range: Range<usize>) -> Result<(), GolemError> {
         self.draw_with_type(eb, range, GeometryType::Triangles)
     }
 
-    pub fn draw_with_type(&mut self, eb: &ElementBuffer, range: Range<usize>, geometry: GeometryType) -> Result<(), GolemError> {
-        let program = unsafe { self.0.gl.get_parameter_i32(glow::CURRENT_PROGRAM) };
+    pub fn draw_with_type(&self, eb: &ElementBuffer, range: Range<usize>, geometry: GeometryType) -> Result<(), GolemError> {
+        // TODO web implementation
+        let program = unsafe { self.0.gl.get_parameter_i32(glow::CURRENT_PROGRAM) } + 1;
         if program == 0 {
             Err(GolemError::NoBoundProgram)
         } else {
@@ -291,7 +301,7 @@ impl Context {
     }
 
 
-    pub(crate) fn bind_uniform(&self, id: u32, name: &str, uniform: UniformValue) -> Result<(), GolemError> {
+    pub(crate) fn bind_uniform(&self, id: GlProgram, name: &str, uniform: UniformValue) -> Result<(), GolemError> {
         let gl = &self.0.gl;
         let location = unsafe { gl.get_uniform_location(id, name) };
         use UniformValue::*;
@@ -314,7 +324,7 @@ impl Context {
         Ok(())
     }
 
-    pub(crate) fn delete_shader(&self, id: u32, fragment: u32, vertex: u32) {
+    pub(crate) fn delete_shader(&self, id: GlProgram, fragment: GlShader, vertex: GlShader) {
         let gl = &self.0.gl;
         unsafe {
             gl.delete_program(id);
@@ -329,13 +339,13 @@ impl Context {
         }
     }
 
-    pub(crate) fn delete_texture(&self, id: u32) {
+    pub(crate) fn delete_texture(&self, id: GlTexture) {
         unsafe {
             self.0.gl.delete_texture(id);
         }
     }
 
-    pub(crate) fn delete_surface(&self, _id: u32) {
+    pub(crate) fn delete_surface(&self, _id: GlFramebuffer) {
         unimplemented!();
     }
 }

@@ -5,7 +5,7 @@ use golem::objects::GeometryType;
 use golem::program::{Attribute, ShaderDescription};
 
 async fn app(window: Window, ctx: glow::Context, mut events: EventStream) -> Result<(), GolemError> {
-    let mut ctx = Context::from_glow(ctx);
+    let ctx = Context::from_glow(ctx);
 
     let vertices = [
         // Position         Color
@@ -35,11 +35,11 @@ async fn app(window: Window, ctx: glow::Context, mut events: EventStream) -> Res
 
     let mut vb = ctx.new_vertex_buffer()?;
     let mut eb = ctx.new_element_buffer()?;
-    vb.send_data(&vertices[1..]);
-    eb.send_data(&indices);
+    vb.set_data(&vertices);
+    eb.set_data(&indices);
     shader.bind(&vb);
 
-    ctx.clear(0.0, 0.0, 0.0, 0.0);
+    ctx.clear();
     ctx.draw_with_type(&eb, 0..indices.len(), GeometryType::Lines)?;
     window.present();
 

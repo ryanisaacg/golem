@@ -1,4 +1,4 @@
-use crate::GolemError;
+use crate::{GolemError, GlProgram, GlShader};
 use crate::buffer::VertexBuffer;
 use crate::objects::UniformValue;
 
@@ -12,9 +12,9 @@ pub struct ShaderDescription<'a> {
 
 pub struct ShaderProgram {
     pub(crate) ctx: crate::Context,
-    pub(crate) id: u32,
-    pub(crate) vertex: u32,
-    pub(crate) fragment: u32,
+    pub(crate) id: GlProgram,
+    pub(crate) vertex: GlShader,
+    pub(crate) fragment: GlShader,
     pub(crate) input: Vec<Attribute>,
 }
 
@@ -95,8 +95,11 @@ impl Attribute {
     }
 
 
-    pub(crate) fn as_glsl(&self, pos: Position, shader: &mut String) {
+    pub(crate) fn as_glsl(&self, _is_vertex: bool, pos: Position, shader: &mut String) {
         use Attribute::*;
+
+        #[cfg(target_arch = "wasm32")]
+        let pos = if _is_vertex { pos } else { Position::Output };
 
         shader.push_str(pos.glsl_string());
         let (gl_type, name) = match self {
