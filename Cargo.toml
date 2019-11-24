@@ -5,8 +5,8 @@ authors = ["Ryan Goldstein <ryan@ryanisaacg.com>"]
 edition = "2018"
 
 [features]
-stdweb = ["glow/stdweb", "blinds/stdweb"]
-web-sys = ["glow/web-sys", "blinds/web-sys"]
+stdweb = ["glow/stdweb"]
+web-sys = ["glow/web-sys"]
 
 [dependencies]
 bytemuck = "1"
