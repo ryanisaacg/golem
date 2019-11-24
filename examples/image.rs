@@ -2,7 +2,7 @@ use blinds::traits::*;
 use blinds::*;
 use golem::{Context, GolemError};
 use golem::program::{Attribute, ShaderDescription, Uniform, UniformType};
-use golem::objects::{ColorFormat, DrawList, UniformValue};
+use golem::objects::{ColorFormat, UniformValue};
 
 async fn app(window: Window, ctx: glow::Context, mut events: EventStream) -> Result<(), GolemError> {
     let mut ctx = Context::from_glow(ctx);
@@ -30,7 +30,7 @@ async fn app(window: Window, ctx: glow::Context, mut events: EventStream) -> Res
         2, 3, 0,
     ];
 
-    let shader = ctx.new_shader(ShaderDescription {
+    let mut shader = ctx.new_shader(ShaderDescription {
         vertex_input: &[
             Attribute::Vector(2, "vert_position"),
             Attribute::Vector(2, "vert_uv"),
@@ -51,14 +51,13 @@ async fn app(window: Window, ctx: glow::Context, mut events: EventStream) -> Res
     let mut eb = ctx.new_element_buffer()?;
     vb.send_data(0, &vertices);
     eb.send_data(0, &indices);
+    shader.bind(&vb);
+    shader.set_uniform("image", UniformValue::Int(0))?;
 
-    ctx.bind_texture(&texture, 0);
-
-    let mut draw = DrawList::new(0..indices.len());
-    draw.add_uniform_binding("image", UniformValue::Int(0));
+    texture.bind(0);
 
     ctx.clear(0.0, 0.0, 0.0, 0.0);
-    ctx.draw(&shader, &vb, &eb, &[draw]);
+    ctx.draw(&eb, 0..indices.len())?;
     window.present();
 
     while let Some(_) = events.next().await {

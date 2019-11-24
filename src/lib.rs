@@ -1,4 +1,5 @@
 // TODO: validate vec and matrix dimensions
+// TODO: add out-of-memory to GolemError?
 
 pub mod buffer;
 pub mod objects;
@@ -15,6 +16,12 @@ pub enum GolemError {
     ShaderCompilationError(String),
     /// Some general error bubbling up from the GL context
     ContextError(String),
+    /// An attempt was made to bind to an illegal uniform TODO
+    NoSuchUniform(&'static str),
+    /// An attempt was made to draw with no shader program bound
+    NoBoundProgram,
+    /// An attempt was made to set a uniform with a program that isn't bound
+    NotCurrentProgram,
 }
 
 impl From<String> for GolemError {

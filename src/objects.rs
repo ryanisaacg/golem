@@ -1,9 +1,18 @@
 use crate::Context;
-use std::ops::Range;
 
 pub struct Texture {
     pub(crate) ctx: Context,
     pub(crate) id: u32
+}
+
+impl Texture {
+    pub fn id(&self) -> u32 {
+        self.id
+    }
+
+    pub fn bind(&self, bind_point: u32) {
+        self.ctx.bind_texture(self.id, bind_point);
+    }
 }
 
 impl Drop for Texture {
@@ -37,30 +46,6 @@ pub enum UniformValue {
     Matrix2([f32; 4]),
     Matrix3([f32; 9]),
     Matrix4([f32; 16]),
-}
-
-pub struct DrawList {
-    pub(crate) range: Range<usize>,
-    pub(crate) uniforms: Vec<(&'static str, UniformValue)>,
-    pub(crate) geometry: GeometryType,
-}
-
-impl DrawList {
-    pub fn new(range: Range<usize>) -> DrawList {
-        DrawList {
-            range,
-            uniforms: Vec::new(),
-            geometry: GeometryType::Triangles,
-        }
-    }
-
-    pub fn add_uniform_binding(&mut self, name: &'static str, uni: UniformValue) {
-        self.uniforms.push((name, uni));
-    }
-
-    pub fn set_geometry_type(&mut self, geom_type: GeometryType) {
-        self.geometry = geom_type;
-    }
 }
 
 pub enum ColorFormat {
