@@ -4,13 +4,10 @@
 // TODO: unbinding textures, also should the API be bindless
 
 type GlTexture = <glow::Context as glow::HasContext>::Texture;
-type GlSampler = <glow::Context as glow::HasContext>::Sampler;
 type GlProgram = <glow::Context as glow::HasContext>::Program;
 type GlShader = <glow::Context as glow::HasContext>::Shader;
-type GlVertexArray = <glow::Context as glow::HasContext>::VertexArray;
 type GlFramebuffer = <glow::Context as glow::HasContext>::Framebuffer;
 type GlBuffer = <glow::Context as glow::HasContext>::Buffer;
-type GlUniformLocation = <glow::Context as glow::HasContext>::UniformLocation;
 
 pub mod buffer;
 pub mod objects;
