@@ -2,7 +2,6 @@
 // TODO: add out-of-memory to GolemError?
 // TODO: allow writing to the data of a texture
 // TODO: unbinding textures, also should the API be bindless
-// TODO: expanding a buffer does not work, actually, so the buffer API needs a re-work
 
 pub mod buffer;
 pub mod objects;
