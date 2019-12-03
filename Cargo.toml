@@ -4,9 +4,13 @@ version = "0.1.0"
 authors = ["Ryan Goldstein <ryan@ryanisaacg.com>"]
 edition = "2018"
 
+[features]
+stdweb = ["glow/stdweb"]
+web-sys = ["glow/web-sys"]
+
 [dependencies]
 bytemuck = "1"
-glow = "0.3.0-alpha4"
+glow = { version = "0.3.0-alpha4", default-features = false }
 log = "0.4"
 
 [dev-dependencies]

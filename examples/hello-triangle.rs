@@ -4,7 +4,7 @@ use golem::{Context, GolemError};
 use golem::program::{Attribute, ShaderDescription};
 
 async fn app(window: Window, ctx: glow::Context, mut events: EventStream) -> Result<(), GolemError> {
-    let mut ctx = Context::from_glow(ctx);
+    let ctx = Context::from_glow(ctx);
 
     let vertices = [
         // Position         Color
@@ -37,7 +37,7 @@ async fn app(window: Window, ctx: glow::Context, mut events: EventStream) -> Res
     eb.set_data(&indices);
     shader.bind(&vb);
 
-    ctx.clear(0.0, 0.0, 0.0, 0.0);
+    ctx.clear();
     ctx.draw(&eb, 0..indices.len())?;
     window.present();
 

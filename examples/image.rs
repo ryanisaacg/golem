@@ -5,7 +5,7 @@ use golem::program::{Attribute, ShaderDescription, Uniform, UniformType};
 use golem::objects::{ColorFormat, UniformValue};
 
 async fn app(window: Window, ctx: glow::Context, mut events: EventStream) -> Result<(), GolemError> {
-    let mut ctx = Context::from_glow(ctx);
+    let ctx = Context::from_glow(ctx);
 
     let image = [
         // R, G, B
@@ -49,14 +49,14 @@ async fn app(window: Window, ctx: glow::Context, mut events: EventStream) -> Res
 
     let mut vb = ctx.new_vertex_buffer()?;
     let mut eb = ctx.new_element_buffer()?;
-    vb.send_data(&vertices);
-    eb.send_data(&indices);
+    vb.set_data(&vertices);
+    eb.set_data(&indices);
     shader.bind(&vb);
     shader.set_uniform("image", UniformValue::Int(0))?;
 
     texture.bind(0);
 
-    ctx.clear(0.0, 0.0, 0.0, 0.0);
+    ctx.clear();
     ctx.draw(&eb, 0..indices.len())?;
     window.present();
 
