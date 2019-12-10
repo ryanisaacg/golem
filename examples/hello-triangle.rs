@@ -1,7 +1,7 @@
 use blinds::traits::*;
 use blinds::*;
 use golem::{Context, GolemError};
-use golem::program::{Attribute, ShaderDescription};
+use golem::shader::{Attribute, AttributeType, Dimension::{D2, D4}, ShaderDescription};
 
 async fn app(window: Window, ctx: glow::Context, mut events: EventStream) -> Result<(), GolemError> {
     let ctx = Context::from_glow(ctx);
@@ -16,10 +16,12 @@ async fn app(window: Window, ctx: glow::Context, mut events: EventStream) -> Res
 
     let mut shader = ctx.new_shader(ShaderDescription {
         vertex_input: &[
-            Attribute::Vector(2, "vert_position"),
-            Attribute::Vector(4, "vert_color"),
+            Attribute::new("vert_position", AttributeType::Vector(D2)),
+            Attribute::new("vert_color", AttributeType::Vector(D4)),
         ],
-        fragment_input: &[ Attribute::Vector(4, "frag_color") ],
+        fragment_input: &[
+            Attribute::new("frag_color", AttributeType::Vector(D4)),
+        ],
         uniforms: &[],
         vertex_shader: r#" void main() {
             gl_Position = vec4(vert_position, 0, 1);

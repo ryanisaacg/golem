@@ -1,7 +1,7 @@
-// TODO: validate vec and matrix dimensions
 // TODO: add out-of-memory to GolemError?
 // TODO: allow writing to the data of a texture
 // TODO: surface resizing, and surfaces just seem broken
+// TODO: unsafe audit: check for possible GL error conditions, and track them
 
 type GlTexture = <glow::Context as glow::HasContext>::Texture;
 type GlProgram = <glow::Context as glow::HasContext>::Program;
@@ -11,7 +11,7 @@ type GlBuffer = <glow::Context as glow::HasContext>::Buffer;
 
 pub mod buffer;
 pub mod objects;
-pub mod program;
+pub mod shader;
 
 mod context;
 pub use self::context::Context;

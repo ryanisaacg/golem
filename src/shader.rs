@@ -43,10 +43,23 @@ impl Drop for ShaderProgram {
 }
 
 #[derive(Clone)]
-pub enum Attribute {
-    Scalar(&'static str),
-    Vector(u8, &'static str),
-    Matrix(u8, u8, &'static str),
+pub struct Attribute {
+    name: &'static str,
+    value: AttributeType,
+}
+
+#[derive(Clone)]
+pub enum AttributeType {
+    Scalar,
+    Vector(Dimension),
+    Matrix(Dimension, Dimension),
+}
+
+#[derive(Copy, Clone)]
+pub enum Dimension {
+    D2 = 2,
+    D3 = 3,
+    D4 = 4,
 }
 
 pub(crate) enum Position { Input, Output }
@@ -74,41 +87,41 @@ impl Position {
 }
 
 impl Attribute {
-    pub fn name(&self) -> &str {
-        use Attribute::*;
-
-        match self {
-            Scalar(name) => name,
-            Vector(_, name) => name,
-            Matrix(_, _, name) => name,
+    pub fn new(name: &'static str, value: AttributeType) -> Attribute {
+        Attribute {
+            name,
+            value
         }
+    }
+
+    pub fn name(&self) -> &str {
+        &self.name
     }
 
     pub fn size(&self) -> i32 {
-        use Attribute::*;
+        use AttributeType::*;
 
-        match self {
-            Scalar(_) => 1,
-            Vector(n, _) => *n as i32,
-            Matrix(m, n, _) => (m * n) as i32,
+        match self.value {
+            Scalar => 1,
+            Vector(n) => n as i32,
+            Matrix(m, n) => (m as i32) * (n as i32),
         }
     }
 
-
     pub(crate) fn as_glsl(&self, _is_vertex: bool, pos: Position, shader: &mut String) {
-        use Attribute::*;
+        use AttributeType::*;
 
         #[cfg(target_arch = "wasm32")]
         let pos = if _is_vertex { pos } else { Position::Output };
 
         shader.push_str(pos.glsl_string());
-        let (gl_type, name) = match self {
-            Scalar(name) => ("float ".to_owned(), name),
-            Vector(n, name) => (format!("vec{} ", n), name),
-            Matrix(m, n, name) => (format!("mat{}x{} ", m, n), name),
+        let gl_type = match self.value {
+            Scalar => "float ".to_owned(),
+            Vector(n) => format!("vec{} ", n as i32),
+            Matrix(m, n) => format!("mat{}x{} ", m as i32, n as i32),
         };
         shader.push_str(&gl_type);
-        shader.push_str(name);
+        shader.push_str(self.name());
         shader.push_str(";");
     }
 }
@@ -117,9 +130,9 @@ pub enum NumberType { Int, Float }
 
 pub enum UniformType {
     Scalar(NumberType),
-    Vector(NumberType, u8),
-    Matrix(u8),
-    Sampler(u8),
+    Vector(NumberType, Dimension),
+    Matrix(Dimension),
+    Sampler2D,
     Array(Box<UniformType>, usize),
     UserType(String),
 }
@@ -155,10 +168,10 @@ impl UniformType {
         match self {
             Scalar(Int) => shader.push_str("int "),
             Scalar(Float) => shader.push_str("float "),
-            Vector(Int, x) => shader.push_str(&format!("ivec{} ", x)),
-            Vector(Float, x) => shader.push_str(&format!("vec{} ", x)),
-            Matrix(x) => shader.push_str(&format!("mat{} ", x)),
-            Sampler(x) => shader.push_str(&format!("sampler{}D ", x)),
+            Vector(Int, x) => shader.push_str(&format!("ivec{} ", *x as i32)),
+            Vector(Float, x) => shader.push_str(&format!("vec{} ", *x as i32)),
+            Matrix(x) => shader.push_str(&format!("mat{} ", *x as i32)),
+            Sampler2D => shader.push_str("sampler2D "),
             Array(u_type, dim) => {
                 u_type.write_type(shader);
                 shader.push_str(&format!("[{}]", dim));

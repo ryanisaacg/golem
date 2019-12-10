@@ -2,7 +2,7 @@ use glow::HasContext;
 use crate::{GolemError, GlFramebuffer, GlProgram, GlShader, GlTexture};
 use crate::buffer::{Buffer, BufferContents, ElementBuffer, VertexBuffer};
 use crate::objects::{ColorFormat, GeometryType, Surface, Texture, UniformValue};
-use crate::program::{Attribute, Position, Uniform, ShaderDescription, ShaderProgram};
+use crate::shader::{Attribute, AttributeType, Dimension::*, Position, Uniform, ShaderDescription, ShaderProgram};
 use std::mem::size_of;
 use std::ops::Range;
 use std::rc::Rc;
@@ -91,7 +91,8 @@ impl Context {
             };
             #[cfg(not(target_arch = "wasm32"))]
             let (fragment_output, fragment_body) = {
-                (&[ Attribute::Vector(4, "outputColor") ], &desc.fragment_shader.replace("gl_FragColor", "outputColor"))
+                (&[ Attribute::new("outputColor", AttributeType::Vector(D4)) ],
+                &desc.fragment_shader.replace("gl_FragColor", "outputColor"))
             };
             let fragment_source = generate_shader_text(false, fragment_body, desc.fragment_input, fragment_output, desc.uniforms);
             log::debug!("Fragment shader source: {}", vertex_source);

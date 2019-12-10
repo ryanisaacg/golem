@@ -1,8 +1,8 @@
 use blinds::traits::*;
 use blinds::*;
 use golem::{Context, GolemError};
-use golem::program::{Attribute, NumberType, ShaderDescription, Uniform, UniformType};
 use golem::objects::{ColorFormat, UniformValue};
+use golem::shader::{Attribute, AttributeType, Dimension::{D2, D4}, NumberType, ShaderDescription, Uniform, UniformType};
 
 async fn app(window: Window, ctx: glow::Context, mut events: EventStream) -> Result<(), GolemError> {
     let ctx = Context::from_glow(ctx);
@@ -18,10 +18,12 @@ async fn app(window: Window, ctx: glow::Context, mut events: EventStream) -> Res
 
     let mut shader = ctx.new_shader(ShaderDescription {
         vertex_input: &[
-            Attribute::Vector(2, "vert_position"),
-            Attribute::Vector(4, "vert_color"),
+            Attribute::new("vert_position", AttributeType::Vector(D2)),
+            Attribute::new("vert_color", AttributeType::Vector(D4)),
         ],
-        fragment_input: &[ Attribute::Vector(4, "frag_color") ],
+        fragment_input: &[
+            Attribute::new("frag_color", AttributeType::Vector(D4)),
+        ],
         uniforms: &[],
         vertex_shader: r#" void main() {
             gl_Position = vec4(vert_position, 0, 1);
@@ -62,14 +64,16 @@ async fn app(window: Window, ctx: glow::Context, mut events: EventStream) -> Res
     ];
     let mut shader = ctx.new_shader(ShaderDescription {
         vertex_input: &[
-            Attribute::Vector(2, "vert_position"),
-            Attribute::Vector(2, "vert_uv"),
+            Attribute::new("vert_position", AttributeType::Vector(D2)),
+            Attribute::new("vert_uv", AttributeType::Vector(D2)),
         ],
-        fragment_input: &[ Attribute::Vector(2, "frag_uv") ],
+        fragment_input: &[
+            Attribute::new("frag_uv", AttributeType::Vector(D2)),
+        ],
         uniforms: &[
-            Uniform::new("image", UniformType::Sampler(2)),
-            Uniform::new("rotate", UniformType::Matrix(2)),
-            Uniform::new("translate", UniformType::Vector(NumberType::Float, 2)),
+            Uniform::new("image", UniformType::Sampler2D),
+            Uniform::new("rotate", UniformType::Matrix(D2)),
+            Uniform::new("translate", UniformType::Vector(NumberType::Float, D2)),
         ],
         vertex_shader: r#" void main() {
             gl_Position = vec4(translate + (rotate * vert_position), 0, 1);
