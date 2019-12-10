@@ -16,14 +16,14 @@ async fn app(window: Window, ctx: glow::Context, mut events: EventStream) -> Res
         0, 0, 255
     ];
 
-    let texture = ctx.new_texture(&image, 2, 2, ColorFormat::RGB)?;
+    let texture = ctx.new_texture(Some(&image), 2, 2, ColorFormat::RGB)?;
 
     let vertices = [
         // Position         UV
-        -0.5, -0.5,         -1.0, -1.0,
-        0.5, -0.5,          1.0, -1.0,
+        -0.5, -0.5,         0.0, 0.0,
+        0.5, -0.5,          1.0, 0.0,
         0.5, 0.5,           1.0, 1.0,
-        -0.5, 0.5,          -1.0, 1.0,
+        -0.5, 0.5,          0.0, 1.0,
     ];
     let indices = [
         0, 1, 2,

@@ -13,6 +13,10 @@ impl Texture {
         }
     }
 
+    pub(crate) fn id(&self) -> GlTexture {
+        self.id
+    }
+
     pub fn bind(&self, bind_point: u32) {
         self.ctx.bind_texture(self.id, bind_point);
     }
@@ -28,6 +32,12 @@ pub struct Surface {
     pub(crate) ctx: Context,
     pub(crate) id: GlFramebuffer,
     pub(crate) texture: Texture
+}
+
+impl Surface {
+    pub fn texture(&self) -> &Texture {
+        &self.texture
+    }
 }
 
 impl Drop for Surface {

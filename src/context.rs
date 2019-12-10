@@ -156,7 +156,7 @@ impl Context {
         Ok(ElementBuffer(self.new_buffer()?))
     }
 
-    pub fn new_texture(&self, image: &[u8], width: u32, height: u32, color: ColorFormat) -> Result<Texture, GolemError> {
+    pub fn new_texture(&self, image: Option<&[u8]>, width: u32, height: u32, color: ColorFormat) -> Result<Texture, GolemError> {
         assert!(width < glow::MAX_TEXTURE_SIZE);
         assert!(height < glow::MAX_TEXTURE_SIZE);
         let format = match color {
@@ -172,7 +172,7 @@ impl Context {
             gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_MIN_FILTER, glow::LINEAR as i32);
             gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_MAG_FILTER, glow::LINEAR as i32);
             gl.tex_image_2d(glow::TEXTURE_2D, 0, glow::RGBA as i32, width as i32,
-                            height as i32, 0, format, glow::UNSIGNED_BYTE, Some(image));
+                            height as i32, 0, format, glow::UNSIGNED_BYTE, image);
             gl.generate_mipmap(glow::TEXTURE_2D);
             gl.bind_texture(glow::TEXTURE_2D, None);
             let ctx = Context(self.0.clone());
@@ -214,16 +214,30 @@ impl Context {
         }
     }
 
-    pub fn new_surface(&self, _width: u32, _height: u32, _format: ColorFormat) -> Surface {
-        unimplemented!();
+    pub fn new_surface(&self, width: u32, height: u32, format: ColorFormat) -> Result<Surface, GolemError> {
+        let gl = &self.0.gl;
+        let id = unsafe { gl.create_framebuffer() }?;
+        unsafe {
+            gl.bind_framebuffer(glow::FRAMEBUFFER, Some(id));
+        }
+        let texture = self.new_texture(None, width, height, format)?;
+        unsafe {
+            gl.framebuffer_texture_2d(glow::FRAMEBUFFER, glow::COLOR_ATTACHMENT0, glow::TEXTURE_2D, Some(texture.id()), 0);
+            gl.bind_framebuffer(glow::FRAMEBUFFER, None);
+        }
+        let ctx = Context(self.0.clone());
+        
+        Ok(Surface {
+            ctx,
+            id,
+            texture,
+        })
     }
 
-    pub fn set_target(&self, _surface: &Surface) {
-        unimplemented!();
-    }
-
-    pub fn reset_target(&self) {
-        unimplemented!();
+    pub fn set_target(&self, surface: Option<&Surface>) {
+        unsafe {
+            self.0.gl.bind_framebuffer(glow::FRAMEBUFFER, surface.map(|s| s.id));
+        }
     }
 
     pub fn set_clear_color(&self, r: f32, g: f32, b: f32, a: f32) {
@@ -345,7 +359,9 @@ impl Context {
         }
     }
 
-    pub(crate) fn delete_surface(&self, _id: GlFramebuffer) {
-        unimplemented!();
+    pub(crate) fn delete_surface(&self, id: GlFramebuffer) {
+        unsafe {
+            self.0.gl.delete_framebuffer(id);
+        }
     }
 }

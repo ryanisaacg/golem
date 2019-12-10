@@ -156,7 +156,7 @@ impl UniformType {
             Scalar(Int) => shader.push_str("int "),
             Scalar(Float) => shader.push_str("float "),
             Vector(Int, x) => shader.push_str(&format!("ivec{} ", x)),
-            Vector(Float, x) => shader.push_str(&format!("fvec{} ", x)),
+            Vector(Float, x) => shader.push_str(&format!("vec{} ", x)),
             Matrix(x) => shader.push_str(&format!("mat{} ", x)),
             Sampler(x) => shader.push_str(&format!("sampler{}D ", x)),
             Array(u_type, dim) => {
