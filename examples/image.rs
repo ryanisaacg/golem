@@ -54,7 +54,7 @@ async fn app(window: Window, ctx: glow::Context, mut events: EventStream) -> Res
     shader.bind(&vb);
     shader.set_uniform("image", UniformValue::Int(0))?;
 
-    texture.bind(0);
+    ctx.bind_texture(Some(&texture), 0);
 
     ctx.clear();
     ctx.draw(&eb, 0..indices.len())?;

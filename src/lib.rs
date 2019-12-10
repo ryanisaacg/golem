@@ -1,7 +1,6 @@
 // TODO: validate vec and matrix dimensions
 // TODO: add out-of-memory to GolemError?
 // TODO: allow writing to the data of a texture
-// TODO: unbinding textures, also should the API be bindless
 // TODO: surface resizing, and surfaces just seem broken
 
 type GlTexture = <glow::Context as glow::HasContext>::Texture;

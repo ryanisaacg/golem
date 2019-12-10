@@ -177,15 +177,19 @@ impl Context {
             gl.bind_texture(glow::TEXTURE_2D, None);
             let ctx = Context(self.0.clone());
             
-            Ok(Texture::new(ctx, tex))
+            Ok(Texture {
+                ctx,
+                id: tex,
+            })
         }
     }
 
-    pub(crate) fn bind_texture(&self, id: GlTexture, texture_unit: u32) {
+    pub fn bind_texture(&self, tex: Option<&Texture>, texture_unit: u32) {
         let gl = &self.0.gl;
+        let value = tex.map(|tex| tex.id);
         unsafe {
             gl.active_texture(glow::TEXTURE0 + texture_unit);
-            gl.bind_texture(glow::TEXTURE_2D, Some(id));
+            gl.bind_texture(glow::TEXTURE_2D, value);
         }
     }
 
@@ -222,7 +226,7 @@ impl Context {
         }
         let texture = self.new_texture(None, width, height, format)?;
         unsafe {
-            gl.framebuffer_texture_2d(glow::FRAMEBUFFER, glow::COLOR_ATTACHMENT0, glow::TEXTURE_2D, Some(texture.id()), 0);
+            gl.framebuffer_texture_2d(glow::FRAMEBUFFER, glow::COLOR_ATTACHMENT0, glow::TEXTURE_2D, Some(texture.id), 0);
             gl.bind_framebuffer(glow::FRAMEBUFFER, None);
         }
         let ctx = Context(self.0.clone());

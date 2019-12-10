@@ -45,7 +45,7 @@ async fn app(window: Window, ctx: glow::Context, mut events: EventStream) -> Res
     ctx.draw(&eb, 0..indices.len())?;
     ctx.set_target(None);
 
-    surface.texture().bind(0);
+    ctx.bind_texture(Some(surface.texture()), 0);
 
     // Step 2: Draw a few copies of this triangle to the screen
     // Also, for fun, let's rotate them dynamically

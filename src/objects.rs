@@ -1,25 +1,8 @@
 use crate::{Context, GlFramebuffer, GlTexture};
 
 pub struct Texture {
-    ctx: Context,
-    id: GlTexture,
-}
-
-impl Texture {
-    pub(crate) fn new(ctx: Context, id: GlTexture) -> Texture {
-        Texture {
-            ctx,
-            id,
-        }
-    }
-
-    pub(crate) fn id(&self) -> GlTexture {
-        self.id
-    }
-
-    pub fn bind(&self, bind_point: u32) {
-        self.ctx.bind_texture(self.id, bind_point);
-    }
+    pub(crate) ctx: Context,
+    pub(crate) id: GlTexture,
 }
 
 impl Drop for Texture {
