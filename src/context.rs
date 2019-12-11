@@ -1,16 +1,16 @@
 use glow::HasContext;
 use crate::{GolemError, GlFramebuffer, GlProgram, GlShader, GlTexture};
 use crate::buffer::{Buffer, BufferContents, ElementBuffer, VertexBuffer};
-use crate::objects::{ColorFormat, GeometryType, Surface, Texture, UniformValue};
+use crate::objects::{ColorFormat, GeometryType, Surface, Texture, TextureWrap, TextureFilter, UniformValue};
 use crate::shader::{Attribute, AttributeType, Dimension::*, Position, Uniform, ShaderDescription, ShaderProgram};
 use std::mem::size_of;
 use std::ops::Range;
 use std::rc::Rc;
 
-pub struct Context(Rc<ContextContents>);
+pub struct Context(pub(crate) Rc<ContextContents>);
 
-struct ContextContents {
-    gl: glow::Context,
+pub(crate) struct ContextContents {
+    pub(crate) gl: glow::Context,
     #[cfg(not(target_arch = "wasm32"))]
     vao: u32,
 }
@@ -190,29 +190,16 @@ impl Context {
     pub fn new_texture(&self, image: Option<&[u8]>, width: u32, height: u32, color: ColorFormat) -> Result<Texture, GolemError> {
         assert!(width < glow::MAX_TEXTURE_SIZE);
         assert!(height < glow::MAX_TEXTURE_SIZE);
-        let format = match color {
-            ColorFormat::RGB => glow::RGB,
-            ColorFormat::RGBA => glow::RGBA
-        };
         let gl = &self.0.gl;
-        unsafe {
-            let tex = gl.create_texture()?;
-            gl.bind_texture(glow::TEXTURE_2D, Some(tex));
-            gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_WRAP_S, glow::CLAMP_TO_EDGE as i32);
-            gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_WRAP_T, glow::CLAMP_TO_EDGE as i32);
-            gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_MIN_FILTER, glow::LINEAR as i32);
-            gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_MAG_FILTER, glow::LINEAR as i32);
-            gl.tex_image_2d(glow::TEXTURE_2D, 0, glow::RGBA as i32, width as i32,
-                            height as i32, 0, format, glow::UNSIGNED_BYTE, image);
-            gl.generate_mipmap(glow::TEXTURE_2D);
-            gl.bind_texture(glow::TEXTURE_2D, None);
-            let ctx = Context(self.0.clone());
-            
-            Ok(Texture {
-                ctx,
-                id: tex,
-            })
-        }
+        let ctx = Context(self.0.clone());
+        let id = unsafe { gl.create_texture()? };
+        let texture = Texture { ctx, id, width, height };
+        texture.set_minification(TextureFilter::Linear);
+        texture.set_magnification(TextureFilter::Linear);
+        texture.set_wrap_h(TextureWrap::ClampToEdge);
+        texture.set_wrap_v(TextureWrap::ClampToEdge);
+        texture.set_image(image, width, height, color);
+        Ok(texture)
     }
 
     pub fn bind_texture(&self, tex: Option<&Texture>, texture_unit: u32) {
