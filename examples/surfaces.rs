@@ -5,7 +5,7 @@ use golem::objects::{ColorFormat, UniformValue};
 use golem::shader::{Attribute, AttributeType, Dimension::{D2, D4}, NumberType, ShaderDescription, Uniform, UniformType};
 
 async fn app(window: Window, ctx: glow::Context, mut events: EventStream) -> Result<(), GolemError> {
-    let ctx = Context::from_glow(ctx);
+    let ctx = Context::from_glow(ctx)?;
 
     // Step 1: Draw a triangle to the surface
     let vertices = [

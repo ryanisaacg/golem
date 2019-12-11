@@ -4,7 +4,7 @@ use golem::{Context, GolemError};
 use golem::shader::{Attribute, AttributeType, Dimension::{D2, D4}, ShaderDescription};
 
 async fn app(window: Window, ctx: glow::Context, mut events: EventStream) -> Result<(), GolemError> {
-    let ctx = Context::from_glow(ctx);
+    let ctx = Context::from_glow(ctx)?;
 
     let vertices = [
         // Position         Color
