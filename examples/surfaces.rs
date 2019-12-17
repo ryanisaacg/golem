@@ -1,11 +1,9 @@
 use blinds::traits::*;
 use blinds::*;
-use golem::{Context, GolemError};
-use golem::objects::{ColorFormat, UniformValue};
-use golem::shader::{Attribute, AttributeType, Dimension::{D2, D4}, NumberType, ShaderDescription, Uniform, UniformType};
+use golem::{Attribute, AttributeType, ColorFormat, Context, GeometryMode, GolemError, Dimension::{D2, D4}, ElementBuffer, NumberType, Surface, Texture, Uniform, UniformType, UniformValue, VertexBuffer, ShaderProgram, ShaderDescription};
 
 async fn app(window: Window, ctx: glow::Context, mut events: EventStream) -> Result<(), GolemError> {
-    let ctx = Context::from_glow(ctx)?;
+    let ctx = &Context::from_glow(ctx)?;
 
     // Step 1: Draw a triangle to the surface
     let vertices = [
@@ -16,7 +14,7 @@ async fn app(window: Window, ctx: glow::Context, mut events: EventStream) -> Res
     ];
     let indices = [0, 1, 2];
 
-    let mut shader = ctx.new_shader(ShaderDescription {
+    let mut shader = ShaderProgram::new(ctx, ShaderDescription {
         vertex_input: &[
             Attribute::new("vert_position", AttributeType::Vector(D2)),
             Attribute::new("vert_color", AttributeType::Vector(D4)),
@@ -35,19 +33,22 @@ async fn app(window: Window, ctx: glow::Context, mut events: EventStream) -> Res
         }"#
     })?;
 
-    let mut vb = ctx.new_vertex_buffer()?;
-    let mut eb = ctx.new_element_buffer()?;
+    let mut vb = VertexBuffer::new(ctx)?;
+    let mut eb = ElementBuffer::new(ctx)?;
     vb.set_data(&vertices);
     eb.set_data(&indices);
     shader.bind(&vb);
-    let surface = ctx.new_surface(1024, 768, ColorFormat::RGBA)?;
+    let mut surface = Surface::new(ctx)?;
+    let mut backing_texture = Texture::new(ctx)?;
+    backing_texture.set_image(None, 1024, 768, ColorFormat::RGBA);
+    surface.set_texture(Some(backing_texture));
 
     ctx.clear();
-    ctx.set_target(Some(&surface));
-    ctx.draw(&eb, 0..indices.len())?;
-    ctx.set_target(None);
+    Surface::bind(ctx, Some(&surface));
+    shader.draw(&eb, 0..indices.len(), GeometryMode::Triangles)?;
+    Surface::bind(ctx, None);
 
-    ctx.bind_texture(Some(surface.texture()), 0);
+    Texture::bind(ctx, surface.texture(), 0);
 
     // Step 2: Draw a few copies of this triangle to the screen
     // Also, for fun, let's rotate them dynamically
@@ -62,7 +63,7 @@ async fn app(window: Window, ctx: glow::Context, mut events: EventStream) -> Res
         0, 1, 2,
         2, 3, 0,
     ];
-    let mut shader = ctx.new_shader(ShaderDescription {
+    let mut shader = ShaderProgram::new(ctx, ShaderDescription {
         vertex_input: &[
             Attribute::new("vert_position", AttributeType::Vector(D2)),
             Attribute::new("vert_uv", AttributeType::Vector(D2)),
@@ -95,7 +96,7 @@ async fn app(window: Window, ctx: glow::Context, mut events: EventStream) -> Res
         let translate = [0.0, 0.0];
         shader.set_uniform("rotate", UniformValue::Matrix2(rotate))?;
         shader.set_uniform("translate", UniformValue::Vector2(translate))?;
-        ctx.draw(&eb, 0..indices.len())?;
+        shader.draw(&eb, 0..indices.len(), GeometryMode::Triangles)?;
         window.present();
     }
 
@@ -103,7 +104,7 @@ async fn app(window: Window, ctx: glow::Context, mut events: EventStream) -> Res
 }
 
 fn main() {
-    blinds::run_gl(Settings::default(), |window, gfx, events| async move {
+    run_gl(Settings::default(), |window, gfx, events| async move {
         app(window, gfx, events).await.unwrap()
     });
 }

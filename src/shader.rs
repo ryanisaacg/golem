@@ -1,6 +1,6 @@
-use crate::{GolemError, GlProgram, GlShader};
-use crate::buffer::VertexBuffer;
-use crate::objects::UniformValue;
+use crate::*;
+use std::mem::size_of;
+use std::ops::Range;
 
 pub struct ShaderDescription<'a> {
     pub vertex_input: &'a [Attribute],
@@ -11,173 +11,218 @@ pub struct ShaderDescription<'a> {
 }
 
 pub struct ShaderProgram {
-    pub(crate) ctx: crate::Context,
-    pub(crate) id: GlProgram,
-    pub(crate) vertex: GlShader,
-    pub(crate) fragment: GlShader,
-    pub(crate) input: Vec<Attribute>,
+    ctx: crate::Context,
+    id: GlProgram,
+    vertex: GlShader,
+    fragment: GlShader,
+    input: Vec<Attribute>,
+}
+
+fn generate_shader_text(is_vertex: bool, body: &str, inputs: &[Attribute], outputs: &[Attribute], uniforms: &[Uniform]) -> String {
+    let mut shader = String::new();
+
+    #[cfg(not(target_arch = "wasm32"))]
+    shader.push_str("#version 150\n");
+
+    shader.push_str("precision mediump float;\n");
+    for attr in inputs.iter() {
+        attr.as_glsl(is_vertex, Position::Input, &mut shader);
+    }
+    for attr in outputs.iter() {
+        attr.as_glsl(is_vertex, Position::Output, &mut shader);
+    }
+    for uniform in uniforms.iter() {
+        uniform.as_glsl(&mut shader);
+    }
+    shader.push_str(body);
+
+    shader
 }
 
 impl ShaderProgram {
+    pub fn new(ctx: &Context, desc: ShaderDescription) -> Result<ShaderProgram, GolemError> {
+        let gl = &ctx.0.gl;
+        unsafe {
+            // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glCreateShader.xhtml
+            // Errors:
+            // 1. An error occurred creating the shader (handled by glow's error layer)
+            // 2. An invalid value was passed (VERTEX_SHADER is valid)
+            let vertex = gl.create_shader(glow::VERTEX_SHADER)?;
+            let vertex_source = generate_shader_text(true, desc.vertex_shader, desc.vertex_input, desc.fragment_input, desc.uniforms);
+            log::debug!("Vertex shader source: {}", vertex_source);
+            // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glShaderSource.xhtml
+            // Errror conditions:
+            // 1 & 2. Vertex isn't a GL shader (it always will be)
+            // 3. Shader size is handled by glow
+            gl.shader_source(vertex, &vertex_source);
+            // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glCompileShader.xhtml
+            // Errror conditions: Vertex isn't a GL shader (it always will be)
+            gl.compile_shader(vertex);
+            if !gl.get_shader_compile_status(vertex) {
+                let info = gl.get_shader_info_log(vertex);
+                log::error!("Failed to compile vertex shader: {}", info);
+                Err(GolemError::ShaderCompilationError(info))?
+            }
+            log::trace!("Compiled vertex shader succesfully");
+
+            // For GL pre/post condition explanations, see vertex shader compilation above
+            let fragment = gl.create_shader(glow::FRAGMENT_SHADER)?;
+            // Handle creating the output color and giving it a name, but only on desktop gl
+            #[cfg(target_arch = "wasm32")]
+            let (fragment_output, fragment_body) = {
+                (&[], desc.fragment_shader)
+            };
+            #[cfg(not(target_arch = "wasm32"))]
+            let (fragment_output, fragment_body) = {
+                (&[ Attribute::new("outputColor", AttributeType::Vector(Dimension::D4)) ],
+                &desc.fragment_shader.replace("gl_FragColor", "outputColor"))
+            };
+            let fragment_source = generate_shader_text(false, fragment_body, desc.fragment_input, fragment_output, desc.uniforms);
+            log::debug!("Fragment shader source: {}", vertex_source);
+            gl.shader_source(fragment, &fragment_source);
+            gl.compile_shader(fragment);
+            if !gl.get_shader_compile_status(fragment) {
+                let info = gl.get_shader_info_log(fragment);
+                log::error!("Failed to compile vertex shader: {}", info);
+                Err(GolemError::ShaderCompilationError(info))?
+            }
+            log::trace!("Compiled fragment shader succesfully");
+
+            // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glCreateProgram.xhtml
+            // Failing to create a program is handled by glow
+            let id = gl.create_program()?;
+
+            // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glAttachShader.xhtml
+            // Errors:
+            // 1, 2, 3: id, vertex, and fragment are all assigned to once, by the correct GL calls
+            // 4: vertex and fragment are generated then immediately attached exactly once
+            gl.attach_shader(id, vertex);
+            gl.attach_shader(id, fragment);
+
+            // Bind the color output for desktop GL
+            // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glBindFragDataLocation.xhtml
+            // Errors:
+            // 1. colorNumber will always be 0, and therefore cannot overrun the bounds
+            // 2. 'outputColor' does not started with the reserved 'gl_' prefix
+            // 3. 'id' is generated by create_program above
+            #[cfg(not(target_arch = "wasm32"))]
+            gl.bind_frag_data_location(id, 0, "outputColor");
+
+            for (index, attr) in desc.vertex_input.iter().enumerate() {
+                gl.bind_attrib_location(id, index as u32, attr.name());
+            }
+
+            gl.link_program(id);
+            if !gl.get_program_link_status(id) {
+                let info = gl.get_program_info_log(id);
+                log::error!("Failed to link the shader program: {}", info);
+                Err(GolemError::ShaderCompilationError(info))?
+            }
+            log::trace!("Linked shader program succesfully");
+
+            Ok(ShaderProgram {
+                ctx: Context(ctx.0.clone()),
+                id,
+                vertex,
+                fragment,
+                input: desc.vertex_input.iter().cloned().collect(),
+            })
+        }
+    }
+
     pub fn is_bound(&self) -> bool {
-        self.ctx.is_program_bound(self.id)
+        // TODO
+        false
     }
 
     pub fn set_uniform(&self, name: &str, uniform: UniformValue) -> Result<(), GolemError> {
         if self.is_bound() {
-            self.ctx.bind_uniform(self.id, name, uniform)
+            let gl = &self.ctx.0.gl;
+            let location = unsafe { gl.get_uniform_location(self.id, name) };
+            use UniformValue::*;
+            unsafe {
+                match uniform {
+                    Int(x) => gl.uniform_1_i32(location, x),
+                    IVector2([x, y]) => gl.uniform_2_i32(location, x, y),
+                    IVector3([x, y, z]) => gl.uniform_3_i32(location, x, y, z),
+                    IVector4([x, y, z, w]) => gl.uniform_4_i32(location, x, y, z, w),
+                    Float(x) => gl.uniform_1_f32(location, x),
+                    Vector2([x, y]) => gl.uniform_2_f32(location, x, y),
+                    Vector3([x, y, z]) => gl.uniform_3_f32(location, x, y, z),
+                    Vector4([x, y, z, w]) => gl.uniform_4_f32(location, x, y, z, w),
+                    Matrix2(mat) => gl.uniform_matrix_2_f32_slice(location, false, &mat),
+                    Matrix3(mat) => gl.uniform_matrix_3_f32_slice(location, false, &mat),
+                    Matrix4(mat) => gl.uniform_matrix_4_f32_slice(location, false, &mat),
+                }
+            }
+
+            Ok(())
         } else {
             Err(GolemError::NotCurrentProgram)
         }
     }
 
     pub fn bind(&mut self, vb: &VertexBuffer) {
-        self.ctx.bind_program(self.id, &self.input, vb);
+        let gl = &self.ctx.0.gl;
+        log::trace!("Binding the shader and buffers");
+        unsafe {
+            gl.use_program(Some(self.id));
+        }
+        vb.bind();
+        let stride: i32 = self.input.iter().map(|attr| attr.size()).sum();
+        let stride = stride * size_of::<f32>() as i32;
+        let mut offset = 0;
+        log::trace!("Binding the attributes to draw");
+        for (index, attr) in self.input.iter().enumerate() {
+            let size = attr.size();
+            unsafe {
+                let pos_attrib = index as u32;
+                gl.enable_vertex_attrib_array(pos_attrib);
+                gl.vertex_attrib_pointer_f32(pos_attrib, size, glow::FLOAT, false, stride, offset);
+            }
+            offset += size * size_of::<f32>() as i32;
+        }
+    }
+    
+    pub fn draw(&self, eb: &ElementBuffer, range: Range<usize>, geometry: GeometryMode) -> Result<(), GolemError> {
+        // TODO web implementation of current program
+        let gl = &self.ctx.0.gl;
+        let program = unsafe { gl.get_parameter_i32(glow::CURRENT_PROGRAM) } + 1;
+        if program == 0 {
+            Err(GolemError::NoBoundProgram)
+        } else {
+            eb.bind();
+            log::trace!("Dispatching draw command");
+            let length = range.end - range.start;
+            use GeometryMode::*;
+            let shape_type = match geometry {
+                Points => glow::POINTS,
+                Lines => glow::LINES,
+                LineStrip => glow::LINE_STRIP,
+                LineLoop => glow::LINE_LOOP,
+                TriangleStrip => glow::TRIANGLE_STRIP,
+                TriangleFan => glow::TRIANGLE_FAN,
+                Triangles => glow::TRIANGLES,
+            };
+            unsafe {
+                gl.draw_elements(shape_type, length as i32, glow::UNSIGNED_INT, range.start as i32);
+            }
+
+            Ok(())
+        }
     }
 }
 
 impl Drop for ShaderProgram {
     fn drop(&mut self) {
-        self.ctx.delete_shader(self.id, self.vertex, self.fragment);
-    }
-}
-
-#[derive(Clone)]
-pub struct Attribute {
-    name: &'static str,
-    value: AttributeType,
-}
-
-#[derive(Clone)]
-pub enum AttributeType {
-    Scalar,
-    Vector(Dimension),
-    Matrix(Dimension, Dimension),
-}
-
-#[derive(Copy, Clone)]
-pub enum Dimension {
-    D2 = 2,
-    D3 = 3,
-    D4 = 4,
-}
-
-pub(crate) enum Position { Input, Output }
-
-impl Position {
-    #[cfg(target_arch = "wasm32")]
-    fn glsl_string(self) -> &'static str {
-        use Position::*;
-
-        match self {
-            Input => "attribute ",
-            Output => "varying ",
-        }
-    }
-
-    #[cfg(not(target_arch = "wasm32"))]
-    fn glsl_string(self) -> &'static str {
-        use Position::*;
-
-        match self {
-            Input => "in ",
-            Output => "out ",
+        let gl = &self.ctx.0.gl;
+        unsafe {
+            gl.delete_program(self.id);
+            gl.delete_shader(self.fragment);
+            gl.delete_shader(self.vertex);
         }
     }
 }
 
-impl Attribute {
-    pub fn new(name: &'static str, value: AttributeType) -> Attribute {
-        Attribute {
-            name,
-            value
-        }
-    }
-
-    pub fn name(&self) -> &str {
-        &self.name
-    }
-
-    pub fn size(&self) -> i32 {
-        use AttributeType::*;
-
-        match self.value {
-            Scalar => 1,
-            Vector(n) => n as i32,
-            Matrix(m, n) => (m as i32) * (n as i32),
-        }
-    }
-
-    pub(crate) fn as_glsl(&self, _is_vertex: bool, pos: Position, shader: &mut String) {
-        use AttributeType::*;
-
-        #[cfg(target_arch = "wasm32")]
-        let pos = if _is_vertex { pos } else { Position::Output };
-
-        shader.push_str(pos.glsl_string());
-        let gl_type = match self.value {
-            Scalar => "float ".to_owned(),
-            Vector(n) => format!("vec{} ", n as i32),
-            Matrix(m, n) => format!("mat{}x{} ", m as i32, n as i32),
-        };
-        shader.push_str(&gl_type);
-        shader.push_str(self.name());
-        shader.push_str(";");
-    }
-}
-
-pub enum NumberType { Int, Float }
-
-pub enum UniformType {
-    Scalar(NumberType),
-    Vector(NumberType, Dimension),
-    Matrix(Dimension),
-    Sampler2D,
-    Array(Box<UniformType>, usize),
-    UserType(String),
-}
-
-pub struct Uniform {
-    pub name: &'static str,
-    pub u_type: UniformType,
-}
-
-impl Uniform {
-    pub fn new(name: &'static str, u_type: UniformType) -> Uniform {
-        Uniform {
-            name,
-            u_type
-        }
-    }
-
-    pub(crate) fn as_glsl(&self, shader: &mut String) {
-        shader.push_str("uniform ");
-        self.u_type.write_type(shader);
-        shader.push_str(self.name);
-        shader.push_str(";");
-    }
-}
 
 
-
-impl UniformType {
-    fn write_type(&self, shader: &mut String) {
-        use NumberType::*;
-        use UniformType::*;
-
-        match self {
-            Scalar(Int) => shader.push_str("int "),
-            Scalar(Float) => shader.push_str("float "),
-            Vector(Int, x) => shader.push_str(&format!("ivec{} ", *x as i32)),
-            Vector(Float, x) => shader.push_str(&format!("vec{} ", *x as i32)),
-            Matrix(x) => shader.push_str(&format!("mat{} ", *x as i32)),
-            Sampler2D => shader.push_str("sampler2D "),
-            Array(u_type, dim) => {
-                u_type.write_type(shader);
-                shader.push_str(&format!("[{}]", dim));
-            },
-            UserType(string) => shader.push_str(&string),
-        }
-
-    }
-}

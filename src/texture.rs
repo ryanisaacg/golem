@@ -1,5 +1,4 @@
-use glow::HasContext;
-use crate::{Context, GlFramebuffer, GlTexture};
+use super::*;
 
 // TODO: unsafe verification
 
@@ -11,7 +10,34 @@ pub struct Texture {
 }
 
 impl Texture {
-    pub fn set_image(&self, data: Option<&[u8]>, width: u32, height: u32, color: ColorFormat) {
+    pub fn new(ctx: &Context) -> Result<Texture, GolemError> {
+        let ctx = Context(ctx.0.clone());
+        let id = unsafe { ctx.0.gl.create_texture()? };
+        // TODO: is this an acceptable state to have a texture
+        Ok(Texture {
+            ctx,
+            id,
+            width: 0,
+            height: 0,
+        })
+    }
+
+    pub fn bind(ctx: &Context, tex: Option<&Texture>, bind_point: u32) {
+        let gl = &ctx.0.gl;
+        let value = tex.map(|tex| tex.id);
+        unsafe {
+            gl.active_texture(glow::TEXTURE0 + bind_point);
+            gl.bind_texture(glow::TEXTURE_2D, value);
+        }
+    }
+
+    pub fn set_image(&mut self, data: Option<&[u8]>, width: u32, height: u32, color: ColorFormat) {
+        // TODO: make into a recoverable error?
+        assert!(width < glow::MAX_TEXTURE_SIZE);
+        assert!(height < glow::MAX_TEXTURE_SIZE);
+        self.width = width;
+        self.height = height;
+
         let format = match color {
             ColorFormat::RGB => glow::RGB,
             ColorFormat::RGBA => glow::RGBA
@@ -95,48 +121,8 @@ impl TextureWrap {
 
 impl Drop for Texture {
     fn drop(&mut self) {
-        self.ctx.delete_texture(self.id);
+        unsafe {
+            self.ctx.0.gl.delete_texture(self.id);
+        }
     }
-}
-
-pub struct Surface {
-    pub(crate) ctx: Context,
-    pub(crate) id: GlFramebuffer,
-    pub(crate) texture: Texture
-}
-
-impl Surface {
-    pub fn texture(&self) -> &Texture {
-        &self.texture
-    }
-}
-
-impl Drop for Surface {
-    fn drop(&mut self) {
-        self.ctx.delete_surface(self.id);
-    }
-}
-
-
-#[derive(Clone)]
-pub enum UniformValue {
-    Int(i32),
-    Float(f32),
-    Vector2([f32; 2]),
-    Vector3([f32; 3]),
-    Vector4([f32; 4]),
-    IVector2([i32; 2]),
-    IVector3([i32; 3]),
-    IVector4([i32; 4]),
-    Matrix2([f32; 4]),
-    Matrix3([f32; 9]),
-    Matrix4([f32; 16]),
-}
-
-pub enum ColorFormat {
-    RGB, RGBA
-}
-
-pub enum GeometryType {
-    Points, Lines, LineStrip, LineLoop, TriangleStrip, TriangleFan, Triangles
 }

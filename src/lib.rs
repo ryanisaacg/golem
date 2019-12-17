@@ -3,18 +3,49 @@
 // TODO: surface resizing, and surfaces just seem broken
 // TODO: unsafe audit: check for possible GL error conditions, and track them
 
-type GlTexture = <glow::Context as glow::HasContext>::Texture;
-type GlProgram = <glow::Context as glow::HasContext>::Program;
-type GlShader = <glow::Context as glow::HasContext>::Shader;
-type GlFramebuffer = <glow::Context as glow::HasContext>::Framebuffer;
-type GlBuffer = <glow::Context as glow::HasContext>::Buffer;
+use glow::HasContext;
 
-pub mod buffer;
-pub mod objects;
-pub mod shader;
+type GlTexture = <glow::Context as HasContext>::Texture;
+type GlProgram = <glow::Context as HasContext>::Program;
+type GlShader = <glow::Context as HasContext>::Shader;
+type GlFramebuffer = <glow::Context as HasContext>::Framebuffer;
+type GlBuffer = <glow::Context as HasContext>::Buffer;
 
+
+mod attribute;
+mod buffer;
 mod context;
+mod shader;
+mod surface;
+mod texture;
+mod uniform;
+
+pub use self::attribute::{Attribute, AttributeType};
+pub use self::buffer::{VertexBuffer, ElementBuffer};
 pub use self::context::Context;
+pub use self::shader::{ShaderDescription, ShaderProgram};
+pub use self::surface::Surface;
+pub use self::texture::{Texture, TextureFilter, TextureWrap};
+pub use self::uniform::{Uniform, UniformType, UniformValue};
+
+pub(crate) enum Position { Input, Output }
+
+pub enum NumberType { Int, Float }
+
+pub enum ColorFormat {
+    RGB, RGBA
+}
+
+#[derive(Copy, Clone)]
+pub enum Dimension {
+    D2 = 2,
+    D3 = 3,
+    D4 = 4,
+}
+
+pub enum GeometryMode {
+    Points, Lines, LineStrip, LineLoop, TriangleStrip, TriangleFan, Triangles
+}
 
 #[derive(Debug)]
 pub enum GolemError {

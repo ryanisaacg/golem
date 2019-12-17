@@ -1,11 +1,9 @@
 use blinds::traits::*;
 use blinds::*;
-use golem::{Context, GolemError};
-use golem::shader::{Attribute, AttributeType, Dimension::D2, ShaderDescription, Uniform, UniformType};
-use golem::objects::{ColorFormat, UniformValue};
+use golem::{Attribute, AttributeType, ColorFormat, Context, GeometryMode, GolemError, Dimension::D2, ElementBuffer, Texture, Uniform, UniformType, UniformValue, VertexBuffer, ShaderProgram, ShaderDescription};
 
 async fn app(window: Window, ctx: glow::Context, mut events: EventStream) -> Result<(), GolemError> {
-    let ctx = Context::from_glow(ctx)?;
+    let ctx = &Context::from_glow(ctx)?;
 
     let image = [
         // R, G, B
@@ -16,7 +14,8 @@ async fn app(window: Window, ctx: glow::Context, mut events: EventStream) -> Res
         0, 0, 255
     ];
 
-    let texture = ctx.new_texture(Some(&image), 2, 2, ColorFormat::RGB)?;
+    let mut texture = Texture::new(&ctx)?;
+    texture.set_image(Some(&image), 2, 2, ColorFormat::RGB);
 
     let vertices = [
         // Position         UV
@@ -30,7 +29,7 @@ async fn app(window: Window, ctx: glow::Context, mut events: EventStream) -> Res
         2, 3, 0,
     ];
 
-    let mut shader = ctx.new_shader(ShaderDescription {
+    let mut shader = ShaderProgram::new(ctx, ShaderDescription {
         vertex_input: &[
             Attribute::new("vert_position", AttributeType::Vector(D2)),
             Attribute::new("vert_uv", AttributeType::Vector(D2)),
@@ -49,17 +48,17 @@ async fn app(window: Window, ctx: glow::Context, mut events: EventStream) -> Res
         }"#
     })?;
 
-    let mut vb = ctx.new_vertex_buffer()?;
-    let mut eb = ctx.new_element_buffer()?;
+    let mut vb = VertexBuffer::new(ctx)?;
+    let mut eb = ElementBuffer::new(ctx)?;
     vb.set_data(&vertices);
     eb.set_data(&indices);
     shader.bind(&vb);
     shader.set_uniform("image", UniformValue::Int(0))?;
 
-    ctx.bind_texture(Some(&texture), 0);
+    Texture::bind(ctx, Some(&texture), 0);
 
     ctx.clear();
-    ctx.draw(&eb, 0..indices.len())?;
+    shader.draw(&eb, 0..indices.len(), GeometryMode::Triangles)?;
     window.present();
 
     while let Some(_) = events.next().await {
@@ -69,7 +68,7 @@ async fn app(window: Window, ctx: glow::Context, mut events: EventStream) -> Res
 }
 
 fn main() {
-    blinds::run_gl(Settings::default(), |window, gfx, events| async move {
+    run_gl(Settings::default(), |window, gfx, events| async move {
         app(window, gfx, events).await.unwrap()
     });
 }

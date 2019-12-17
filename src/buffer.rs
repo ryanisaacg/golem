@@ -1,39 +1,86 @@
-use crate::{Context, GlBuffer};
+use crate::*;
 
-pub struct VertexBuffer(pub(crate) Buffer);
+pub struct VertexBuffer(Buffer);
 
 impl VertexBuffer {
+    pub fn new(ctx: &Context) -> Result<VertexBuffer, GolemError> {
+        Ok(VertexBuffer(Buffer::new(ctx)?))
+    }
+
     pub fn set_data(&mut self, data: &[f32]) {
         self.0.set_data(glow::ARRAY_BUFFER, data);
     }
+    
+    pub(crate) fn bind(&self) {
+        self.0.bind(glow::ELEMENT_ARRAY_BUFFER);
+    }
 }
 
-pub struct ElementBuffer(pub(crate) Buffer);
+pub struct ElementBuffer(Buffer);
 
 impl ElementBuffer {
+    pub fn new(ctx: &Context) -> Result<ElementBuffer, GolemError> {
+        Ok(ElementBuffer(Buffer::new(ctx)?))
+    }
+
     pub fn set_data(&mut self, data: &[u32]) {
         self.0.set_data(glow::ELEMENT_ARRAY_BUFFER, data);
+    }
+    
+    pub(crate) fn bind(&self) {
+        self.0.bind(glow::ELEMENT_ARRAY_BUFFER);
     }
 }
 
 pub(crate) struct Buffer {
-    pub(crate) ctx: Context,
-    pub(crate) contents: BufferContents,
-}
-
-pub(crate) struct BufferContents {
-    pub(crate) id: GlBuffer,
-    pub(crate) length: usize,
+    ctx: Context,
+    id: GlBuffer,
+    length: usize,
 }
 
 impl Buffer {
+    fn new(ctx: &Context) -> Result<Buffer, GolemError> {
+        let ctx = Context(ctx.0.clone());
+        let id = unsafe { ctx.0.gl.create_buffer() }?;
+
+        Ok(Buffer {
+            ctx,
+            id,
+            length: 0
+        })
+    }
+
+    fn bind(&self, target: u32) {
+        unsafe {
+            self.ctx.0.gl.bind_buffer(target, Some(self.id));
+        }
+    }
+
     fn set_data<T: bytemuck::Pod>(&mut self, target: u32, data: &[T]) {
-        self.ctx.set_data(&mut self.contents, target, data);
+        let gl = &self.ctx.0.gl;
+
+        let u8_buffer = bytemuck::cast_slice(data);
+        let data_length = u8_buffer.len();
+        self.bind(target);
+        if data_length >= self.length {
+            log::trace!("Resizing buffer to hold new data");
+            let new_length = data_length * 2;
+            unsafe {
+                gl.buffer_data_size(target, new_length as i32, glow::STREAM_DRAW);
+            }
+            self.length = new_length;
+        }
+        log::trace!("Writing data to OpenGL buffer");
+        unsafe {
+            gl.buffer_sub_data_u8_slice(target, 0, u8_buffer);
+        }
     }
 }
 
 impl Drop for Buffer {
     fn drop(&mut self) {
-        self.ctx.delete_buffer(&self.contents);
+        unsafe {
+            self.ctx.0.gl.delete_buffer(self.id);
+        }
     }
 }
