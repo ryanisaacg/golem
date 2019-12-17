@@ -31,6 +31,14 @@ impl Texture {
         }
     }
 
+    pub fn width(&self) -> u32 {
+        self.width
+    }
+
+    pub fn height(&self) -> u32 {
+        self.height
+    }
+
     pub fn set_image(&mut self, data: Option<&[u8]>, width: u32, height: u32, color: ColorFormat) {
         // TODO: make into a recoverable error?
         assert!(width < glow::MAX_TEXTURE_SIZE);
