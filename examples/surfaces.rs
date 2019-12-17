@@ -40,13 +40,18 @@ async fn app(window: Window, ctx: glow::Context, mut events: EventStream) -> Res
     shader.bind(&vb);
     let mut surface = Surface::new(ctx)?;
     let mut backing_texture = Texture::new(ctx)?;
-    backing_texture.set_image(None, 1024, 768, ColorFormat::RGBA);
+    backing_texture.set_image(None, 100, 100, ColorFormat::RGBA);
+    ctx.set_viewport(0, 0, backing_texture.width(), backing_texture.height());
     surface.set_texture(Some(backing_texture));
 
     ctx.clear();
     Surface::bind(ctx, Some(&surface));
     shader.draw(&eb, 0..indices.len(), GeometryMode::Triangles)?;
     Surface::bind(ctx, None);
+
+    let size = window.size();
+    let scale = window.scale();
+    ctx.set_viewport(0, 0, (size.x * scale) as u32, (size.y * scale) as u32);
 
     Texture::bind(ctx, surface.texture(), 0);
 
@@ -90,12 +95,24 @@ async fn app(window: Window, ctx: glow::Context, mut events: EventStream) -> Res
     shader.bind(&vb);
     shader.set_uniform("image", UniformValue::Int(0))?;
 
+    let mut angle = 0f32;
     while let Some(_) = events.next().await {
         ctx.clear();
-        let rotate = [1.0, 0.0, 0.0, 1.0];
-        let translate = [0.0, 0.0];
+        let c = angle.cos();
+        let s = angle.sin();
+        let rotate = [
+            c, -s,
+            s, c,
+        ];
+        angle += 0.001;
         shader.set_uniform("rotate", UniformValue::Matrix2(rotate))?;
-        shader.set_uniform("translate", UniformValue::Vector2(translate))?;
+        shader.set_uniform("translate", UniformValue::Vector2([-0.5, -0.5]))?;
+        shader.draw(&eb, 0..indices.len(), GeometryMode::Triangles)?;
+        shader.set_uniform("translate", UniformValue::Vector2([-0.5, 0.5]))?;
+        shader.draw(&eb, 0..indices.len(), GeometryMode::Triangles)?;
+        shader.set_uniform("translate", UniformValue::Vector2([0.5, 0.5]))?;
+        shader.draw(&eb, 0..indices.len(), GeometryMode::Triangles)?;
+        shader.set_uniform("translate", UniformValue::Vector2([0.5, -0.5]))?;
         shader.draw(&eb, 0..indices.len(), GeometryMode::Triangles)?;
         window.present();
     }

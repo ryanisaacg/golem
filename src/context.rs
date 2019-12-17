@@ -49,6 +49,12 @@ impl Context {
         Ok(contents)
     }
 
+    pub fn set_viewport(&self, x: u32, y: u32, width: u32, height: u32) {
+        unsafe {
+            self.0.gl.viewport(x as i32, y as i32, width as i32, height as i32);
+        }
+    }
+
     pub fn set_clear_color(&self, r: f32, g: f32, b: f32, a: f32) {
         // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glClearColor.xhtml
         // Set the clear color to (r, g, b, a)

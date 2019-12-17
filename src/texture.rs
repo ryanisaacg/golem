@@ -14,12 +14,15 @@ impl Texture {
         let ctx = Context(ctx.0.clone());
         let id = unsafe { ctx.0.gl.create_texture()? };
         // TODO: is this an acceptable state to have a texture
-        Ok(Texture {
+        let tex = Texture {
             ctx,
             id,
             width: 0,
             height: 0,
-        })
+        };
+        tex.set_minification(TextureFilter::Linear);
+
+        Ok(tex)
     }
 
     pub fn bind(ctx: &Context, tex: Option<&Texture>, bind_point: u32) {
