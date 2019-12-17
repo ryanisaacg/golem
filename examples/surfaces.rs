@@ -44,8 +44,8 @@ async fn app(window: Window, ctx: glow::Context, mut events: EventStream) -> Res
     ctx.set_viewport(0, 0, backing_texture.width(), backing_texture.height());
     surface.set_texture(Some(backing_texture));
 
-    ctx.clear();
     Surface::bind(ctx, Some(&surface));
+    ctx.clear();
     shader.draw(&eb, 0..indices.len(), GeometryMode::Triangles)?;
     Surface::bind(ctx, None);
 
