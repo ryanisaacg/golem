@@ -55,9 +55,9 @@ pub enum GolemError {
     ContextError(String),
     /// An attempt was made to bind to an illegal uniform TODO
     NoSuchUniform(&'static str),
-    /// An attempt was made to draw with no shader program bound
-    NoBoundProgram,
-    /// An attempt was made to set a uniform with a program that isn't bound
+    /// An operation was performed on a shader that wasn't bound
+    ///
+    /// Shader operations include setting uniforms and drawing
     NotCurrentProgram,
 }
 

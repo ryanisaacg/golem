@@ -1,11 +1,13 @@
 use glow::HasContext;
-use crate::{GolemError};
+use crate::{GlProgram, GolemError};
+use std::cell::RefCell;
 use std::rc::Rc;
 
 pub struct Context(pub(crate) Rc<ContextContents>);
 
 pub(crate) struct ContextContents {
     pub(crate) gl: glow::Context,
+    pub(crate) current_program: RefCell<Option<GlProgram>>,
     #[cfg(not(target_arch = "wasm32"))]
     vao: u32,
 }
@@ -38,6 +40,7 @@ impl Context {
 
         let contents = Context(Rc::new(ContextContents {
             gl,
+            current_program: RefCell::new(None),
             #[cfg(not(target_arch = "wasm32"))]
             vao,
         }));

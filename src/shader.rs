@@ -131,8 +131,10 @@ impl ShaderProgram {
     }
 
     pub fn is_bound(&self) -> bool {
-        // TODO
-        false
+        match *self.ctx.0.current_program.borrow() {
+            Some(program) => self.id == program,
+            None => false
+        }
     }
 
     pub fn set_uniform(&self, name: &str, uniform: UniformValue) -> Result<(), GolemError> {
@@ -182,14 +184,13 @@ impl ShaderProgram {
             }
             offset += size * size_of::<f32>() as i32;
         }
+        *self.ctx.0.current_program.borrow_mut() = Some(self.id);
     }
     
     pub fn draw(&self, eb: &ElementBuffer, range: Range<usize>, geometry: GeometryMode) -> Result<(), GolemError> {
-        // TODO web implementation of current program
         let gl = &self.ctx.0.gl;
-        let program = unsafe { gl.get_parameter_i32(glow::CURRENT_PROGRAM) } + 1;
-        if program == 0 {
-            Err(GolemError::NoBoundProgram)
+        if !self.is_bound() {
+            Err(GolemError::NotCurrentProgram)
         } else {
             eb.bind();
             log::trace!("Dispatching draw command");
