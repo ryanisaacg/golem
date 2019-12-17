@@ -1,6 +1,4 @@
 // TODO: add out-of-memory to GolemError?
-// TODO: allow writing to the data of a texture
-// TODO: surface resizing, and surfaces just seem broken
 // TODO: unsafe audit: check for possible GL error conditions, and track them
 
 use glow::HasContext;
