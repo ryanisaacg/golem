@@ -42,27 +42,23 @@ impl Surface {
         }
     }
 
-    pub fn get_pixels(&self, x: u32, y: u32, width: u32, height: u32, format: ColorFormat) -> Vec<u8> {
+    pub fn get_pixel_data(&self, x: u32, y: u32, width: u32, height: u32, format: ColorFormat, data: &mut [u8]) {
         let bytes_per_pixel = match format {
             ColorFormat::RGBA => 4,
             ColorFormat::RGB => 3
         };
+        let length = (width * height * bytes_per_pixel) as usize;
+        assert!(data.len() >= length);
         let format = match format {
             ColorFormat::RGB => glow::RGB,
             ColorFormat::RGBA => glow::RGBA
         };
-        let length = (width * height * bytes_per_pixel) as usize;
-        let mut buffer: Vec<u8> = Vec::with_capacity(length);
         let gl = &self.ctx.0.gl;
         unsafe {
             gl.bind_framebuffer(glow::FRAMEBUFFER, Some(self.id));
-            let pointer = buffer.as_mut_slice();
-            gl.read_pixels(x as i32, y as i32, width as i32, height as i32, format, glow::UNSIGNED_BYTE, pointer);
-            buffer.set_len(length);
+            gl.read_pixels(x as i32, y as i32, width as i32, height as i32, format, glow::UNSIGNED_BYTE, data);
             gl.bind_framebuffer(glow::FRAMEBUFFER, None);
         }
-
-        buffer
     }
 }
 
