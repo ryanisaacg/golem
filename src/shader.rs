@@ -187,16 +187,26 @@ impl ShaderProgram {
         *self.ctx.0.current_program.borrow_mut() = Some(self.id);
     }
 
-    // TODO: describe sources of unsafety (element buffer elements out-of-range, maybe verify the
-    // range passed to draw_elements?)
+    /// Draw the given elements from the element buffer to the screen with this shader
+    ///
+    /// The range should fall within the elements of the buffer (which is checked for via an
+    /// `assert!`.) The GeometryMode determines what the set of indices produces: triangles
+    /// consumes 3 vertices into a filled triangle, lines consumes 2 vertices into a thin line,
+    /// etc.
+    ///
+    /// The source of unsafety is the range values in the ElementBuffer: if they are out of bounds
+    /// of the VertexBuffer (see [`bind`]), this will result in out-of-bounds reads on the GPU and
+    /// therefore undefined behavior.
+    ///
+    /// [`bind`]: Self::bind
     pub unsafe fn draw(&self, eb: &ElementBuffer, range: Range<usize>, geometry: GeometryMode) -> Result<(), GolemError> {
         let gl = &self.ctx.0.gl;
         if !self.is_bound() {
             Err(GolemError::NotCurrentProgram)
         } else {
+            assert!(range.end <= eb.len());
             eb.bind();
             log::trace!("Dispatching draw command");
-            let length = range.end - range.start;
             use GeometryMode::*;
             let shape_type = match geometry {
                 Points => glow::POINTS,
@@ -207,9 +217,8 @@ impl ShaderProgram {
                 TriangleFan => glow::TRIANGLE_FAN,
                 Triangles => glow::TRIANGLES,
             };
-            unsafe {
-                gl.draw_elements(shape_type, length as i32, glow::UNSIGNED_INT, range.start as i32);
-            }
+            let length = range.end - range.start;
+            gl.draw_elements(shape_type, length as i32, glow::UNSIGNED_INT, range.start as i32);
 
             Ok(())
         }

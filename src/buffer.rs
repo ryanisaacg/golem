@@ -10,6 +10,10 @@ impl VertexBuffer {
     pub fn set_data(&mut self, data: &[f32]) {
         self.0.set_data(glow::ARRAY_BUFFER, data);
     }
+
+    pub fn len(&self) -> usize {
+        self.0.length
+    }
     
     pub(crate) fn bind(&self) {
         self.0.bind(glow::ELEMENT_ARRAY_BUFFER);
@@ -25,6 +29,10 @@ impl ElementBuffer {
 
     pub fn set_data(&mut self, data: &[u32]) {
         self.0.set_data(glow::ELEMENT_ARRAY_BUFFER, data);
+    }
+    
+    pub fn len(&self) -> usize {
+        self.0.length
     }
     
     pub(crate) fn bind(&self) {
