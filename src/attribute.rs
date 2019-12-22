@@ -1,4 +1,4 @@
-use crate::{Position, Dimension};
+use crate::{Dimension, Position};
 
 #[derive(Clone)]
 pub struct Attribute {
@@ -37,10 +37,7 @@ impl Position {
 
 impl Attribute {
     pub fn new(name: &'static str, value: AttributeType) -> Attribute {
-        Attribute {
-            name,
-            value
-        }
+        Attribute { name, value }
     }
 
     pub fn name(&self) -> &str {

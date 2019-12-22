@@ -7,10 +7,7 @@ pub struct Uniform {
 
 impl Uniform {
     pub fn new(name: &'static str, u_type: UniformType) -> Uniform {
-        Uniform {
-            name,
-            u_type
-        }
+        Uniform { name, u_type }
     }
 
     pub(crate) fn as_glsl(&self, shader: &mut String) {
@@ -30,7 +27,6 @@ pub enum UniformType {
     UserType(String),
 }
 
-
 impl UniformType {
     fn write_type(&self, shader: &mut String) {
         use NumberType::*;
@@ -46,10 +42,9 @@ impl UniformType {
             Array(u_type, dim) => {
                 u_type.write_type(shader);
                 shader.push_str(&format!("[{}]", dim));
-            },
+            }
             UserType(string) => shader.push_str(&string),
         }
-
     }
 }
 

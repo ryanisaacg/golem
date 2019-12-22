@@ -18,7 +18,13 @@ pub struct ShaderProgram {
     input: Vec<Attribute>,
 }
 
-fn generate_shader_text(is_vertex: bool, body: &str, inputs: &[Attribute], outputs: &[Attribute], uniforms: &[Uniform]) -> String {
+fn generate_shader_text(
+    is_vertex: bool,
+    body: &str,
+    inputs: &[Attribute],
+    outputs: &[Attribute],
+    uniforms: &[Uniform],
+) -> String {
     let mut shader = String::new();
 
     #[cfg(not(target_arch = "wasm32"))]
@@ -48,7 +54,13 @@ impl ShaderProgram {
             // 1. An error occurred creating the shader (handled by glow's error layer)
             // 2. An invalid value was passed (VERTEX_SHADER is valid)
             let vertex = gl.create_shader(glow::VERTEX_SHADER)?;
-            let vertex_source = generate_shader_text(true, desc.vertex_shader, desc.vertex_input, desc.fragment_input, desc.uniforms);
+            let vertex_source = generate_shader_text(
+                true,
+                desc.vertex_shader,
+                desc.vertex_input,
+                desc.fragment_input,
+                desc.uniforms,
+            );
             log::debug!("Vertex shader source: {}", vertex_source);
             // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glShaderSource.xhtml
             // Errror conditions:
@@ -69,15 +81,24 @@ impl ShaderProgram {
             let fragment = gl.create_shader(glow::FRAGMENT_SHADER)?;
             // Handle creating the output color and giving it a name, but only on desktop gl
             #[cfg(target_arch = "wasm32")]
-            let (fragment_output, fragment_body) = {
-                (&[], desc.fragment_shader)
-            };
+            let (fragment_output, fragment_body) = { (&[], desc.fragment_shader) };
             #[cfg(not(target_arch = "wasm32"))]
             let (fragment_output, fragment_body) = {
-                (&[ Attribute::new("outputColor", AttributeType::Vector(Dimension::D4)) ],
-                &desc.fragment_shader.replace("gl_FragColor", "outputColor"))
+                (
+                    &[Attribute::new(
+                        "outputColor",
+                        AttributeType::Vector(Dimension::D4),
+                    )],
+                    &desc.fragment_shader.replace("gl_FragColor", "outputColor"),
+                )
             };
-            let fragment_source = generate_shader_text(false, fragment_body, desc.fragment_input, fragment_output, desc.uniforms);
+            let fragment_source = generate_shader_text(
+                false,
+                fragment_body,
+                desc.fragment_input,
+                fragment_output,
+                desc.uniforms,
+            );
             log::debug!("Fragment shader source: {}", vertex_source);
             gl.shader_source(fragment, &fragment_source);
             gl.compile_shader(fragment);
@@ -133,7 +154,7 @@ impl ShaderProgram {
     pub fn is_bound(&self) -> bool {
         match *self.ctx.0.current_program.borrow() {
             Some(program) => self.id == program,
-            None => false
+            None => false,
         }
     }
 
@@ -199,7 +220,12 @@ impl ShaderProgram {
     /// therefore undefined behavior.
     ///
     /// [`bind`]: ShaderProgram::bind
-    pub unsafe fn draw(&self, eb: &ElementBuffer, range: Range<usize>, geometry: GeometryMode) -> Result<(), GolemError> {
+    pub unsafe fn draw(
+        &self,
+        eb: &ElementBuffer,
+        range: Range<usize>,
+        geometry: GeometryMode,
+    ) -> Result<(), GolemError> {
         let gl = &self.ctx.0.gl;
         if !self.is_bound() {
             Err(GolemError::NotCurrentProgram)
@@ -218,7 +244,12 @@ impl ShaderProgram {
                 Triangles => glow::TRIANGLES,
             };
             let length = range.end - range.start;
-            gl.draw_elements(shape_type, length as i32, glow::UNSIGNED_INT, range.start as i32);
+            gl.draw_elements(
+                shape_type,
+                length as i32,
+                glow::UNSIGNED_INT,
+                range.start as i32,
+            );
 
             Ok(())
         }
@@ -235,6 +266,3 @@ impl Drop for ShaderProgram {
         }
     }
 }
-
-
-

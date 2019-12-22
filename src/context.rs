@@ -1,5 +1,5 @@
-use glow::HasContext;
 use crate::{GlProgram, GolemError};
+use glow::HasContext;
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -51,7 +51,9 @@ impl Context {
 
     pub fn set_viewport(&self, x: u32, y: u32, width: u32, height: u32) {
         unsafe {
-            self.0.gl.viewport(x as i32, y as i32, width as i32, height as i32);
+            self.0
+                .gl
+                .viewport(x as i32, y as i32, width as i32, height as i32);
         }
     }
 

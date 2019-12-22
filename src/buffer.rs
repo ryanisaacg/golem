@@ -14,7 +14,7 @@ impl VertexBuffer {
     pub fn len(&self) -> usize {
         self.0.length
     }
-    
+
     pub(crate) fn bind(&self) {
         self.0.bind(glow::ELEMENT_ARRAY_BUFFER);
     }
@@ -30,11 +30,11 @@ impl ElementBuffer {
     pub fn set_data(&mut self, data: &[u32]) {
         self.0.set_data(glow::ELEMENT_ARRAY_BUFFER, data);
     }
-    
+
     pub fn len(&self) -> usize {
         self.0.length
     }
-    
+
     pub(crate) fn bind(&self) {
         self.0.bind(glow::ELEMENT_ARRAY_BUFFER);
     }
@@ -51,11 +51,7 @@ impl Buffer {
         let ctx = Context(ctx.0.clone());
         let id = unsafe { ctx.0.gl.create_buffer() }?;
 
-        Ok(Buffer {
-            ctx,
-            id,
-            length: 0
-        })
+        Ok(Buffer { ctx, id, length: 0 })
     }
 
     fn bind(&self, target: u32) {

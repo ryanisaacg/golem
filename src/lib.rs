@@ -9,7 +9,6 @@ type GlShader = <glow::Context as HasContext>::Shader;
 type GlFramebuffer = <glow::Context as HasContext>::Framebuffer;
 type GlBuffer = <glow::Context as HasContext>::Buffer;
 
-
 mod attribute;
 mod buffer;
 mod context;
@@ -19,19 +18,26 @@ mod texture;
 mod uniform;
 
 pub use self::attribute::{Attribute, AttributeType};
-pub use self::buffer::{VertexBuffer, ElementBuffer};
+pub use self::buffer::{ElementBuffer, VertexBuffer};
 pub use self::context::Context;
 pub use self::shader::{ShaderDescription, ShaderProgram};
 pub use self::surface::Surface;
 pub use self::texture::{Texture, TextureFilter, TextureWrap};
 pub use self::uniform::{Uniform, UniformType, UniformValue};
 
-pub(crate) enum Position { Input, Output }
+pub(crate) enum Position {
+    Input,
+    Output,
+}
 
-pub enum NumberType { Int, Float }
+pub enum NumberType {
+    Int,
+    Float,
+}
 
 pub enum ColorFormat {
-    RGB, RGBA
+    RGB,
+    RGBA,
 }
 
 #[derive(Copy, Clone)]
@@ -42,7 +48,13 @@ pub enum Dimension {
 }
 
 pub enum GeometryMode {
-    Points, Lines, LineStrip, LineLoop, TriangleStrip, TriangleFan, Triangles
+    Points,
+    Lines,
+    LineStrip,
+    LineLoop,
+    TriangleStrip,
+    TriangleFan,
+    Triangles,
 }
 
 #[derive(Debug)]

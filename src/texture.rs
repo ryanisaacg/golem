@@ -51,30 +51,56 @@ impl Texture {
 
         let format = match color {
             ColorFormat::RGB => glow::RGB,
-            ColorFormat::RGBA => glow::RGBA
+            ColorFormat::RGBA => glow::RGBA,
         };
         let gl = &self.ctx.0.gl;
         unsafe {
             gl.bind_texture(glow::TEXTURE_2D, Some(self.id));
-            gl.tex_image_2d(glow::TEXTURE_2D, 0, glow::RGBA as i32, width as i32,
-                            height as i32, 0, format, glow::UNSIGNED_BYTE, data);
+            gl.tex_image_2d(
+                glow::TEXTURE_2D,
+                0,
+                glow::RGBA as i32,
+                width as i32,
+                height as i32,
+                0,
+                format,
+                glow::UNSIGNED_BYTE,
+                data,
+            );
             gl.generate_mipmap(glow::TEXTURE_2D);
             gl.bind_texture(glow::TEXTURE_2D, None);
         }
     }
 
-    pub fn set_subimage(&self, data: &[u8], x: u32, y: u32, width: u32, height: u32, color: ColorFormat) {
+    pub fn set_subimage(
+        &self,
+        data: &[u8],
+        x: u32,
+        y: u32,
+        width: u32,
+        height: u32,
+        color: ColorFormat,
+    ) {
         assert!(x + width <= self.width);
         assert!(y + height <= self.height);
         let format = match color {
             ColorFormat::RGB => glow::RGB,
-            ColorFormat::RGBA => glow::RGBA
+            ColorFormat::RGBA => glow::RGBA,
         };
         let gl = &self.ctx.0.gl;
         unsafe {
             gl.bind_texture(glow::TEXTURE_2D, Some(self.id));
-            gl.tex_sub_image_2d_u8_slice(glow::TEXTURE_2D, 0, x as i32, y as i32, width as i32,
-                            height as i32, format, glow::UNSIGNED_BYTE, Some(data));
+            gl.tex_sub_image_2d_u8_slice(
+                glow::TEXTURE_2D,
+                0,
+                x as i32,
+                y as i32,
+                width as i32,
+                height as i32,
+                format,
+                glow::UNSIGNED_BYTE,
+                Some(data),
+            );
             gl.generate_mipmap(glow::TEXTURE_2D);
             gl.bind_texture(glow::TEXTURE_2D, None);
         }
@@ -100,14 +126,16 @@ impl Texture {
     pub fn set_wrap_h(&self, wrap: TextureWrap) {
         self.set_texture_param(glow::TEXTURE_WRAP_S, wrap.to_gl());
     }
-    
+
     pub fn set_wrap_v(&self, wrap: TextureWrap) {
         self.set_texture_param(glow::TEXTURE_WRAP_T, wrap.to_gl());
     }
 }
 
-
-pub enum TextureFilter { Linear, Nearest }
+pub enum TextureFilter {
+    Linear,
+    Nearest,
+}
 
 impl TextureFilter {
     pub(crate) fn to_gl(&self) -> i32 {
@@ -118,7 +146,11 @@ impl TextureFilter {
     }
 }
 
-pub enum TextureWrap { Repeat, ClampToEdge, MirroredRepeat }
+pub enum TextureWrap {
+    Repeat,
+    ClampToEdge,
+    MirroredRepeat,
+}
 
 impl TextureWrap {
     pub(crate) fn to_gl(&self) -> i32 {
