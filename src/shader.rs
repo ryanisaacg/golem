@@ -186,8 +186,10 @@ impl ShaderProgram {
         }
         *self.ctx.0.current_program.borrow_mut() = Some(self.id);
     }
-    
-    pub fn draw(&self, eb: &ElementBuffer, range: Range<usize>, geometry: GeometryMode) -> Result<(), GolemError> {
+
+    // TODO: describe sources of unsafety (element buffer elements out-of-range, maybe verify the
+    // range passed to draw_elements?)
+    pub unsafe fn draw(&self, eb: &ElementBuffer, range: Range<usize>, geometry: GeometryMode) -> Result<(), GolemError> {
         let gl = &self.ctx.0.gl;
         if !self.is_bound() {
             Err(GolemError::NotCurrentProgram)
