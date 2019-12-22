@@ -198,7 +198,7 @@ impl ShaderProgram {
     /// of the VertexBuffer (see [`bind`]), this will result in out-of-bounds reads on the GPU and
     /// therefore undefined behavior.
     ///
-    /// [`bind`]: Self::bind
+    /// [`bind`]: ShaderProgram::bind
     pub unsafe fn draw(&self, eb: &ElementBuffer, range: Range<usize>, geometry: GeometryMode) -> Result<(), GolemError> {
         let gl = &self.ctx.0.gl;
         if !self.is_bound() {
