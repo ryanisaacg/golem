@@ -16,7 +16,7 @@ impl VertexBuffer {
     }
 
     pub(crate) fn bind(&self) {
-        self.0.bind(glow::ELEMENT_ARRAY_BUFFER);
+        self.0.bind(glow::ARRAY_BUFFER);
     }
 }
 
