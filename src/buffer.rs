@@ -1,74 +1,35 @@
 use crate::*;
 
-pub struct VertexBuffer(Buffer);
+pub type VertexBuffer = Buffer<f32>;
 
-impl VertexBuffer {
-    pub fn new(ctx: &Context) -> Result<VertexBuffer, GolemError> {
-        Ok(VertexBuffer(Buffer::new(ctx)?))
-    }
+pub type ElementBuffer = Buffer<u32>;
 
-    pub fn set_data(&mut self, data: &[f32]) {
-        self.0.set_data(glow::ARRAY_BUFFER, data);
-    }
-
-    pub fn set_sub_data(&mut self, start: usize, data: &[f32]) {
-        self.0.set_sub_data(glow::ARRAY_BUFFER, start, data);
-    }
-
-    pub fn size(&self) -> usize {
-        self.0.length
-    }
-
-    pub(crate) fn bind(&self) {
-        self.0.bind(glow::ARRAY_BUFFER);
-    }
-}
-
-pub struct ElementBuffer(Buffer);
-
-impl ElementBuffer {
-    pub fn new(ctx: &Context) -> Result<ElementBuffer, GolemError> {
-        Ok(ElementBuffer(Buffer::new(ctx)?))
-    }
-
-    pub fn set_data(&mut self, data: &[u32]) {
-        self.0.set_data(glow::ELEMENT_ARRAY_BUFFER, data);
-    }
-    
-    pub fn set_sub_data(&mut self, start: usize, data: &[u32]) {
-        self.0.set_sub_data(glow::ELEMENT_ARRAY_BUFFER, start, data);
-    }
-
-    pub fn size(&self) -> usize {
-        self.0.length
-    }
-
-    pub(crate) fn bind(&self) {
-        self.0.bind(glow::ELEMENT_ARRAY_BUFFER);
-    }
-}
-
-pub(crate) struct Buffer {
+pub struct Buffer<T> {
     ctx: Context,
     id: GlBuffer,
     length: usize,
+    _p: std::marker::PhantomData<T>
 }
 
-impl Buffer {
-    fn new(ctx: &Context) -> Result<Buffer, GolemError> {
+impl<T: bytemuck::Pod> Buffer<T> {
+    pub fn new(ctx: &Context) -> Result<Self, GolemError> {
         let ctx = Context(ctx.0.clone());
         let id = unsafe { ctx.0.gl.create_buffer() }?;
 
-        Ok(Buffer { ctx, id, length: 0 })
+        Ok(Buffer { ctx, id, length: 0, _p: std::marker::PhantomData })
     }
 
-    fn bind(&self, target: u32) {
+    pub(crate) fn bind(&self, target: u32) {
         unsafe {
             self.ctx.0.gl.bind_buffer(target, Some(self.id));
         }
     }
 
-    fn set_data<T: bytemuck::Pod>(&mut self, target: u32, data: &[T]) {
+    pub fn size(&self) -> usize {
+        self.length
+    }
+
+    pub fn set_data(&mut self, target: u32, data: &[T]) {
         let gl = &self.ctx.0.gl;
 
         let u8_buffer = bytemuck::cast_slice(data);
@@ -88,7 +49,7 @@ impl Buffer {
         }
     }
 
-    fn set_sub_data<T: bytemuck::Pod>(&self, target: u32, start: usize, data: &[T]) {
+    pub fn set_sub_data(&self, target: u32, start: usize, data: &[T]) {
         let u8_buffer = bytemuck::cast_slice(data);
         let data_length = u8_buffer.len();
         assert!(start + data_length < self.length);
@@ -99,7 +60,7 @@ impl Buffer {
     }
 }
 
-impl Drop for Buffer {
+impl<T> Drop for Buffer<T> {
     fn drop(&mut self) {
         unsafe {
             self.ctx.0.gl.delete_buffer(self.id);

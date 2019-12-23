@@ -194,7 +194,7 @@ impl ShaderProgram {
         *self.ctx.0.current_program.borrow_mut() = Some(self.id);
     }
 
-    /// Draw the given elements from the element buffer to the screen with this shader
+    /// Draw the given elements from the element buffer with this shader
     ///
     /// The range should fall within the elements of the buffer (which is checked for via an
     /// `assert!`.) The GeometryMode determines what the set of indices produces: triangles
@@ -214,42 +214,73 @@ impl ShaderProgram {
         range: Range<usize>,
         geometry: GeometryMode,
     ) -> Result<(), GolemError> {
-        let gl = &self.ctx.0.gl;
+        assert!(range.end <= eb.size());
+        // prepare_draw also takes care of ensuring this program is current
+        self.prepare_draw(vb, eb)?;
+        self.draw_prepared(range, geometry);
+        Ok(())
+    }
+
+    pub fn prepare_draw(&self, vb: &VertexBuffer, eb: &ElementBuffer) -> Result<(), GolemError> {
         if !self.is_bound() {
             Err(GolemError::NotCurrentProgram)
         } else {
-            assert!(range.end <= eb.size());
-            self.bind_vertex(vb);
-            eb.bind();
-            log::trace!("Dispatching draw command");
-            let length = range.end - range.start;
-            gl.draw_elements(
-                ShaderProgram::shape_type(geometry),
-                length as i32,
-                glow::UNSIGNED_INT,
-                range.start as i32,
-            );
+            eb.bind(glow::ELEMENT_ARRAY_BUFFER);
+            vb.bind(glow::ARRAY_BUFFER);
+            let stride: i32 = self.input.iter().map(|attr| attr.size()).sum();
+            let stride = stride * size_of::<f32>() as i32;
+            let mut offset = 0;
+            log::trace!("Binding the attributes to draw");
+            let gl = &self.ctx.0.gl;
+            for (index, attr) in self.input.iter().enumerate() {
+                let size = attr.size();
+                unsafe {
+                    let pos_attrib = index as u32;
+                    gl.enable_vertex_attrib_array(pos_attrib);
+                    gl.vertex_attrib_pointer_f32(pos_attrib, size, glow::FLOAT, false, stride, offset);
+                }
+                offset += size * size_of::<f32>() as i32;
+            }
 
             Ok(())
         }
     }
 
-    fn bind_vertex(&self, vb: &VertexBuffer) {
-        vb.bind();
-        let stride: i32 = self.input.iter().map(|attr| attr.size()).sum();
-        let stride = stride * size_of::<f32>() as i32;
-        let mut offset = 0;
-        log::trace!("Binding the attributes to draw");
-        let gl = &self.ctx.0.gl;
-        for (index, attr) in self.input.iter().enumerate() {
-            let size = attr.size();
-            unsafe {
-                let pos_attrib = index as u32;
-                gl.enable_vertex_attrib_array(pos_attrib);
-                gl.vertex_attrib_pointer_f32(pos_attrib, size, glow::FLOAT, false, stride, offset);
-            }
-            offset += size * size_of::<f32>() as i32;
-        }
+    /// Draw the given elements from the prepared element buffer with this shader
+    ///
+    /// This relies on the caller having a valid prepared state: see [`prepare_draw`].
+    ///
+    /// # Safety
+    ///
+    /// The safety concerns to keep in mind:
+    ///
+    /// 1. [`prepare_draw`] *must* be called before this method, and the buffers passed to it
+    ///    *must* not have their underlying storage changed. Their values can change, but calls to
+    ///    `set_data` may cause them to expand and move to a new memory location on the GPU,
+    ///    invalidating the cal to preparation. Some calls to [`set_data`] are optimized to calls
+    ///    to [`set_sub_data`]; do not rely on this implementation detail.
+    /// 2. No other buffers may be operated on between [`prepare_draw`] and `draw_prepared`. Any
+    ///    calls to [`set_data`] or [`set_sub_data`] from a buffer that wasn't passed to
+    ///    [`prepare_draw`] will result in the wrong buffer being bound when `draw_prepared` is
+    ///    called.
+    /// 3. The elements in the prepared buffer must correspond to valid locations within the vertex
+    ///    buffer. See [`draw`] for details.
+    /// 4. This shader must still be bound (see [`bind`])
+    ///
+    /// [`prepare_draw`]: ShaderProgram::prepare_draw
+    /// [`draw`]: ShaderProgram::draw
+    /// [`bind`]: ShaderProgram::bind
+    /// [`set_data`]: crate::Buffer::set_data
+    /// [`set_sub_data`]: crate::Buffer::set_sub_data
+    pub unsafe fn draw_prepared(&self, range: Range<usize>, geometry: GeometryMode) {
+        log::trace!("Dispatching draw command");
+        let length = range.end - range.start;
+        self.ctx.0.gl.draw_elements(
+            ShaderProgram::shape_type(geometry),
+            length as i32,
+            glow::UNSIGNED_INT,
+            range.start as i32,
+        );
     }
 
     fn shape_type(geometry: GeometryMode) -> u32 {

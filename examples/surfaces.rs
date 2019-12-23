@@ -102,6 +102,7 @@ async fn app(
     vb.set_data(&vertices);
     eb.set_data(&indices);
     shader.bind();
+    shader.prepare_draw(&vb, &eb)?;
     shader.set_uniform("image", UniformValue::Int(0))?;
 
     let mut angle = 0f32;
@@ -115,13 +116,13 @@ async fn app(
         shader.set_uniform("rotate", UniformValue::Matrix2(rotate))?;
         shader.set_uniform("translate", UniformValue::Vector2([-0.5, -0.5]))?;
         unsafe {
-            shader.draw(&vb, &eb, 0..indices.len(), GeometryMode::Triangles)?;
+            shader.draw_prepared(0..indices.len(), GeometryMode::Triangles);
             shader.set_uniform("translate", UniformValue::Vector2([-0.5, 0.5]))?;
-            shader.draw(&vb, &eb, 0..indices.len(), GeometryMode::Triangles)?;
+            shader.draw_prepared(0..indices.len(), GeometryMode::Triangles);
             shader.set_uniform("translate", UniformValue::Vector2([0.5, 0.5]))?;
-            shader.draw(&vb, &eb, 0..indices.len(), GeometryMode::Triangles)?;
+            shader.draw_prepared(0..indices.len(), GeometryMode::Triangles);
             shader.set_uniform("translate", UniformValue::Vector2([0.5, -0.5]))?;
-            shader.draw(&vb, &eb, 0..indices.len(), GeometryMode::Triangles)?;
+            shader.draw_prepared(0..indices.len(), GeometryMode::Triangles);
         }
         window.present();
     }
