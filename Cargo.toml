@@ -2,6 +2,7 @@
 name = "golem"
 version = "0.1.0-alpha0"
 authors = ["Ryan Goldstein <ryan@ryanisaacg.com>"]
+description = "A (mostly) safe library for graphics programming"
 categories = ["game-development", "web-programming", "graphics"]
 keywords = ["gl", "opengl", "webgl", "graphics",]
 license = "MIT OR Apache-2.0"
