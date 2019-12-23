@@ -230,7 +230,7 @@ impl ShaderProgram {
         if !self.is_bound() {
             Err(GolemError::NotCurrentProgram)
         } else {
-            assert!(range.end <= eb.len());
+            assert!(range.end <= eb.size());
             eb.bind();
             log::trace!("Dispatching draw command");
             use GeometryMode::*;

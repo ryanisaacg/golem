@@ -11,7 +11,7 @@ impl VertexBuffer {
         self.0.set_data(glow::ARRAY_BUFFER, data);
     }
 
-    pub fn len(&self) -> usize {
+    pub fn size(&self) -> usize {
         self.0.length
     }
 
@@ -31,7 +31,7 @@ impl ElementBuffer {
         self.0.set_data(glow::ELEMENT_ARRAY_BUFFER, data);
     }
 
-    pub fn len(&self) -> usize {
+    pub fn size(&self) -> usize {
         self.0.length
     }
 
