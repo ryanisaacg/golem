@@ -11,6 +11,10 @@ impl VertexBuffer {
         self.0.set_data(glow::ARRAY_BUFFER, data);
     }
 
+    pub fn set_sub_data(&mut self, start: usize, data: &[f32]) {
+        self.0.set_sub_data(glow::ARRAY_BUFFER, start, data);
+    }
+
     pub fn size(&self) -> usize {
         self.0.length
     }
@@ -29,6 +33,10 @@ impl ElementBuffer {
 
     pub fn set_data(&mut self, data: &[u32]) {
         self.0.set_data(glow::ELEMENT_ARRAY_BUFFER, data);
+    }
+    
+    pub fn set_sub_data(&mut self, start: usize, data: &[u32]) {
+        self.0.set_sub_data(glow::ELEMENT_ARRAY_BUFFER, start, data);
     }
 
     pub fn size(&self) -> usize {
@@ -77,6 +85,16 @@ impl Buffer {
         log::trace!("Writing data to OpenGL buffer");
         unsafe {
             gl.buffer_sub_data_u8_slice(target, 0, u8_buffer);
+        }
+    }
+
+    fn set_sub_data<T: bytemuck::Pod>(&self, target: u32, start: usize, data: &[T]) {
+        let u8_buffer = bytemuck::cast_slice(data);
+        let data_length = u8_buffer.len();
+        assert!(start + data_length < self.length);
+        log::trace!("Writing data to OpenGL buffer");
+        unsafe {
+            self.ctx.0.gl.buffer_sub_data_u8_slice(target, start as i32, u8_buffer);
         }
     }
 }
