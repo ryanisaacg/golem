@@ -19,7 +19,7 @@ mod texture;
 mod uniform;
 
 pub use self::attribute::{Attribute, AttributeType};
-pub use self::buffer::{ElementBuffer, VertexBuffer, Buffer};
+pub use self::buffer::{Buffer, ElementBuffer, VertexBuffer};
 pub use self::context::Context;
 pub use self::shader::{ShaderDescription, ShaderProgram};
 pub use self::surface::Surface;

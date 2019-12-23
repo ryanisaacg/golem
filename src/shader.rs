@@ -237,7 +237,14 @@ impl ShaderProgram {
                 unsafe {
                     let pos_attrib = index as u32;
                     gl.enable_vertex_attrib_array(pos_attrib);
-                    gl.vertex_attrib_pointer_f32(pos_attrib, size, glow::FLOAT, false, stride, offset);
+                    gl.vertex_attrib_pointer_f32(
+                        pos_attrib,
+                        size,
+                        glow::FLOAT,
+                        false,
+                        stride,
+                        offset,
+                    );
                 }
                 offset += size * size_of::<f32>() as i32;
             }

@@ -8,7 +8,7 @@ pub struct Buffer<T> {
     ctx: Context,
     id: GlBuffer,
     length: usize,
-    _p: std::marker::PhantomData<T>
+    _p: std::marker::PhantomData<T>,
 }
 
 impl<T: bytemuck::Pod> Buffer<T> {
@@ -16,7 +16,12 @@ impl<T: bytemuck::Pod> Buffer<T> {
         let ctx = Context(ctx.0.clone());
         let id = unsafe { ctx.0.gl.create_buffer() }?;
 
-        Ok(Buffer { ctx, id, length: 0, _p: std::marker::PhantomData })
+        Ok(Buffer {
+            ctx,
+            id,
+            length: 0,
+            _p: std::marker::PhantomData,
+        })
     }
 
     pub(crate) fn bind(&self, target: u32) {
@@ -55,7 +60,10 @@ impl<T: bytemuck::Pod> Buffer<T> {
         assert!(start + data_length < self.length);
         log::trace!("Writing data to OpenGL buffer");
         unsafe {
-            self.ctx.0.gl.buffer_sub_data_u8_slice(target, start as i32, u8_buffer);
+            self.ctx
+                .0
+                .gl
+                .buffer_sub_data_u8_slice(target, start as i32, u8_buffer);
         }
     }
 }
