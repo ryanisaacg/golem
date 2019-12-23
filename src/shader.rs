@@ -73,7 +73,7 @@ impl ShaderProgram {
             if !gl.get_shader_compile_status(vertex) {
                 let info = gl.get_shader_info_log(vertex);
                 log::error!("Failed to compile vertex shader: {}", info);
-                Err(GolemError::ShaderCompilationError(info))?
+                return Err(GolemError::ShaderCompilationError(info));
             }
             log::trace!("Compiled vertex shader succesfully");
 
@@ -105,7 +105,7 @@ impl ShaderProgram {
             if !gl.get_shader_compile_status(fragment) {
                 let info = gl.get_shader_info_log(fragment);
                 log::error!("Failed to compile vertex shader: {}", info);
-                Err(GolemError::ShaderCompilationError(info))?
+                return Err(GolemError::ShaderCompilationError(info));
             }
             log::trace!("Compiled fragment shader succesfully");
 
@@ -137,7 +137,7 @@ impl ShaderProgram {
             if !gl.get_program_link_status(id) {
                 let info = gl.get_program_info_log(id);
                 log::error!("Failed to link the shader program: {}", info);
-                Err(GolemError::ShaderCompilationError(info))?
+                return Err(GolemError::ShaderCompilationError(info));
             }
             log::trace!("Linked shader program succesfully");
 
@@ -146,7 +146,7 @@ impl ShaderProgram {
                 id,
                 vertex,
                 fragment,
-                input: desc.vertex_input.iter().cloned().collect(),
+                input: desc.vertex_input.to_vec(),
             })
         }
     }
@@ -215,9 +215,12 @@ impl ShaderProgram {
     /// consumes 3 vertices into a filled triangle, lines consumes 2 vertices into a thin line,
     /// etc.
     ///
+    /// # Safety
+    ///
     /// The source of unsafety is the range values in the ElementBuffer: if they are out of bounds
     /// of the VertexBuffer (see [`bind`]), this will result in out-of-bounds reads on the GPU and
-    /// therefore undefined behavior.
+    /// therefore undefined behavior. The caller is responsible for ensuring all elements are
+    /// valid and in-bounds.
     ///
     /// [`bind`]: ShaderProgram::bind
     pub unsafe fn draw(
