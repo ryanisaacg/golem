@@ -65,7 +65,7 @@ pub enum GolemError {
     ShaderCompilationError(String),
     /// Some general error bubbling up from the GL context
     ContextError(String),
-    /// An attempt was made to bind to an illegal uniform TODO
+    /// An attempt was made to bind to an illegal uniform
     NoSuchUniform(&'static str),
     /// An operation was performed on a shader that wasn't bound
     ///

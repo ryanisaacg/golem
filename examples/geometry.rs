@@ -1,4 +1,3 @@
-use blinds::traits::*;
 use blinds::*;
 use golem::{
     Attribute, AttributeType, Context,
@@ -49,14 +48,14 @@ async fn app(
     shader.bind(&vb);
 
     ctx.clear();
-    shader.draw(&eb, 0..indices.len(), GeometryMode::Lines)?;
+    unsafe {
+        shader.draw(&eb, 0..indices.len(), GeometryMode::Lines)?;
+    }
     window.present();
 
     loop {
-        events.next().await
+        events.next_event().await;
     }
-
-    Ok(())
 }
 
 fn main() {

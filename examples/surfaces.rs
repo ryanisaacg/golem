@@ -1,4 +1,3 @@
-use blinds::traits::*;
 use blinds::*;
 use golem::{
     Attribute, AttributeType, ColorFormat, Context,
@@ -56,11 +55,13 @@ async fn app(
 
     Surface::bind(ctx, Some(&surface));
     ctx.clear();
-    shader.draw(&eb, 0..indices.len(), GeometryMode::Triangles)?;
+    unsafe {
+        shader.draw(&eb, 0..indices.len(), GeometryMode::Triangles)?;
+    }
     Surface::bind(ctx, None);
 
     let size = window.size();
-    let scale = window.scale();
+    let scale = window.scale_factor();
     ctx.set_viewport(0, 0, (size.x * scale) as u32, (size.y * scale) as u32);
 
     Texture::bind(ctx, surface.texture(), 0);
@@ -104,7 +105,8 @@ async fn app(
     shader.set_uniform("image", UniformValue::Int(0))?;
 
     let mut angle = 0f32;
-    while let Some(_) = events.next().await {
+    loop {
+        while let Some(_) = events.next_event().await {}
         ctx.clear();
         let c = angle.cos();
         let s = angle.sin();
@@ -112,17 +114,17 @@ async fn app(
         angle += 0.001;
         shader.set_uniform("rotate", UniformValue::Matrix2(rotate))?;
         shader.set_uniform("translate", UniformValue::Vector2([-0.5, -0.5]))?;
-        shader.draw(&eb, 0..indices.len(), GeometryMode::Triangles)?;
-        shader.set_uniform("translate", UniformValue::Vector2([-0.5, 0.5]))?;
-        shader.draw(&eb, 0..indices.len(), GeometryMode::Triangles)?;
-        shader.set_uniform("translate", UniformValue::Vector2([0.5, 0.5]))?;
-        shader.draw(&eb, 0..indices.len(), GeometryMode::Triangles)?;
-        shader.set_uniform("translate", UniformValue::Vector2([0.5, -0.5]))?;
-        shader.draw(&eb, 0..indices.len(), GeometryMode::Triangles)?;
+        unsafe {
+            shader.draw(&eb, 0..indices.len(), GeometryMode::Triangles)?;
+            shader.set_uniform("translate", UniformValue::Vector2([-0.5, 0.5]))?;
+            shader.draw(&eb, 0..indices.len(), GeometryMode::Triangles)?;
+            shader.set_uniform("translate", UniformValue::Vector2([0.5, 0.5]))?;
+            shader.draw(&eb, 0..indices.len(), GeometryMode::Triangles)?;
+            shader.set_uniform("translate", UniformValue::Vector2([0.5, -0.5]))?;
+            shader.draw(&eb, 0..indices.len(), GeometryMode::Triangles)?;
+        }
         window.present();
     }
-
-    Ok(())
 }
 
 fn main() {
