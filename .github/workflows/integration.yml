@@ -18,6 +18,7 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       run: sudo apt update && sudo apt install libudev-dev
     - name: Check formatting
+      if: matrix.rust == 'stable'
       run: cargo fmt -- --check
     - name: Clippy desktop
       run: cargo clippy -- -D warnings
