@@ -45,11 +45,11 @@ async fn app(
     let mut eb = ElementBuffer::new(ctx)?;
     vb.set_data(&vertices);
     eb.set_data(&indices);
-    shader.bind(&vb);
+    shader.bind();
 
     ctx.clear();
     unsafe {
-        shader.draw(&eb, 0..indices.len(), GeometryMode::Lines)?;
+        shader.draw(&vb, &eb, 0..indices.len(), GeometryMode::Lines)?;
     }
     window.present();
 

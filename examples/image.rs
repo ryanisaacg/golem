@@ -58,14 +58,14 @@ async fn app(
     let mut eb = ElementBuffer::new(ctx)?;
     vb.set_data(&vertices);
     eb.set_data(&indices);
-    shader.bind(&vb);
+    shader.bind();
     shader.set_uniform("image", UniformValue::Int(0))?;
 
     Texture::bind(ctx, Some(&texture), 0);
 
     ctx.clear();
     unsafe {
-        shader.draw(&eb, 0..indices.len(), GeometryMode::Triangles)?;
+        shader.draw(&vb, &eb, 0..indices.len(), GeometryMode::Triangles)?;
     }
     window.present();
 

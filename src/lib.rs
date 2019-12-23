@@ -1,5 +1,6 @@
 // TODO: add out-of-memory to GolemError?
 // TODO: unsafe audit: check for possible GL error conditions, and track them
+// TODO: optimize out duplicate vertex attribute calls
 
 use glow::HasContext;
 

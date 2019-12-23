@@ -185,25 +185,11 @@ impl ShaderProgram {
         }
     }
 
-    pub fn bind(&mut self, vb: &VertexBuffer) {
+    pub fn bind(&mut self) {
         let gl = &self.ctx.0.gl;
         log::trace!("Binding the shader and buffers");
         unsafe {
             gl.use_program(Some(self.id));
-        }
-        vb.bind();
-        let stride: i32 = self.input.iter().map(|attr| attr.size()).sum();
-        let stride = stride * size_of::<f32>() as i32;
-        let mut offset = 0;
-        log::trace!("Binding the attributes to draw");
-        for (index, attr) in self.input.iter().enumerate() {
-            let size = attr.size();
-            unsafe {
-                let pos_attrib = index as u32;
-                gl.enable_vertex_attrib_array(pos_attrib);
-                gl.vertex_attrib_pointer_f32(pos_attrib, size, glow::FLOAT, false, stride, offset);
-            }
-            offset += size * size_of::<f32>() as i32;
         }
         *self.ctx.0.current_program.borrow_mut() = Some(self.id);
     }
@@ -218,13 +204,12 @@ impl ShaderProgram {
     /// # Safety
     ///
     /// The source of unsafety is the range values in the ElementBuffer: if they are out of bounds
-    /// of the VertexBuffer (see [`bind`]), this will result in out-of-bounds reads on the GPU and
+    /// of the VertexBuffer, this will result in out-of-bounds reads on the GPU and
     /// therefore undefined behavior. The caller is responsible for ensuring all elements are
     /// valid and in-bounds.
-    ///
-    /// [`bind`]: ShaderProgram::bind
     pub unsafe fn draw(
         &self,
+        vb: &VertexBuffer,
         eb: &ElementBuffer,
         range: Range<usize>,
         geometry: GeometryMode,
@@ -234,27 +219,49 @@ impl ShaderProgram {
             Err(GolemError::NotCurrentProgram)
         } else {
             assert!(range.end <= eb.size());
+            self.bind_vertex(vb);
             eb.bind();
             log::trace!("Dispatching draw command");
-            use GeometryMode::*;
-            let shape_type = match geometry {
-                Points => glow::POINTS,
-                Lines => glow::LINES,
-                LineStrip => glow::LINE_STRIP,
-                LineLoop => glow::LINE_LOOP,
-                TriangleStrip => glow::TRIANGLE_STRIP,
-                TriangleFan => glow::TRIANGLE_FAN,
-                Triangles => glow::TRIANGLES,
-            };
             let length = range.end - range.start;
             gl.draw_elements(
-                shape_type,
+                ShaderProgram::shape_type(geometry),
                 length as i32,
                 glow::UNSIGNED_INT,
                 range.start as i32,
             );
 
             Ok(())
+        }
+    }
+
+    fn bind_vertex(&self, vb: &VertexBuffer) {
+        vb.bind();
+        let stride: i32 = self.input.iter().map(|attr| attr.size()).sum();
+        let stride = stride * size_of::<f32>() as i32;
+        let mut offset = 0;
+        log::trace!("Binding the attributes to draw");
+        let gl = &self.ctx.0.gl;
+        for (index, attr) in self.input.iter().enumerate() {
+            let size = attr.size();
+            unsafe {
+                let pos_attrib = index as u32;
+                gl.enable_vertex_attrib_array(pos_attrib);
+                gl.vertex_attrib_pointer_f32(pos_attrib, size, glow::FLOAT, false, stride, offset);
+            }
+            offset += size * size_of::<f32>() as i32;
+        }
+    }
+
+    fn shape_type(geometry: GeometryMode) -> u32 {
+        use GeometryMode::*;
+        match geometry {
+            Points => glow::POINTS,
+            Lines => glow::LINES,
+            LineStrip => glow::LINE_STRIP,
+            LineLoop => glow::LINE_LOOP,
+            TriangleStrip => glow::TRIANGLE_STRIP,
+            TriangleFan => glow::TRIANGLE_FAN,
+            Triangles => glow::TRIANGLES,
         }
     }
 }

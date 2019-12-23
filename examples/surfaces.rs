@@ -46,7 +46,7 @@ async fn app(
     let mut eb = ElementBuffer::new(ctx)?;
     vb.set_data(&vertices);
     eb.set_data(&indices);
-    shader.bind(&vb);
+    shader.bind();
     let mut surface = Surface::new(ctx)?;
     let mut backing_texture = Texture::new(ctx)?;
     backing_texture.set_image(None, 100, 100, ColorFormat::RGBA);
@@ -56,7 +56,7 @@ async fn app(
     Surface::bind(ctx, Some(&surface));
     ctx.clear();
     unsafe {
-        shader.draw(&eb, 0..indices.len(), GeometryMode::Triangles)?;
+        shader.draw(&vb, &eb, 0..indices.len(), GeometryMode::Triangles)?;
     }
     Surface::bind(ctx, None);
 
@@ -101,7 +101,7 @@ async fn app(
     )?;
     vb.set_data(&vertices);
     eb.set_data(&indices);
-    shader.bind(&vb);
+    shader.bind();
     shader.set_uniform("image", UniformValue::Int(0))?;
 
     let mut angle = 0f32;
@@ -115,13 +115,13 @@ async fn app(
         shader.set_uniform("rotate", UniformValue::Matrix2(rotate))?;
         shader.set_uniform("translate", UniformValue::Vector2([-0.5, -0.5]))?;
         unsafe {
-            shader.draw(&eb, 0..indices.len(), GeometryMode::Triangles)?;
+            shader.draw(&vb, &eb, 0..indices.len(), GeometryMode::Triangles)?;
             shader.set_uniform("translate", UniformValue::Vector2([-0.5, 0.5]))?;
-            shader.draw(&eb, 0..indices.len(), GeometryMode::Triangles)?;
+            shader.draw(&vb, &eb, 0..indices.len(), GeometryMode::Triangles)?;
             shader.set_uniform("translate", UniformValue::Vector2([0.5, 0.5]))?;
-            shader.draw(&eb, 0..indices.len(), GeometryMode::Triangles)?;
+            shader.draw(&vb, &eb, 0..indices.len(), GeometryMode::Triangles)?;
             shader.set_uniform("translate", UniformValue::Vector2([0.5, -0.5]))?;
-            shader.draw(&eb, 0..indices.len(), GeometryMode::Triangles)?;
+            shader.draw(&vb, &eb, 0..indices.len(), GeometryMode::Triangles)?;
         }
         window.present();
     }
