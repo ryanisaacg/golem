@@ -2,7 +2,11 @@
 name = "golem"
 version = "0.1.0-alpha0"
 authors = ["Ryan Goldstein <ryan@ryanisaacg.com>"]
+categories = ["game-development", "web-programming", "graphics"]
+keywords = ["gl", "opengl", "webgl", "graphics",]
+license = "MIT OR Apache-2.0"
 edition = "2018"
+repository = "https://github.com/ryanisaacg/golem"
 
 [features]
 stdweb = ["glow/stdweb"]
