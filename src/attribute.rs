@@ -1,15 +1,23 @@
 use crate::{Dimension, Position};
 
 #[derive(Clone)]
+/// An input to a shader program stage
+///
+/// Attributes are composed of a name and a type, which are generated to form an OpenGL shader
+/// attribute declaration. They indicate the input to the vertex and fragment shader steps.
 pub struct Attribute {
     name: &'static str,
     value: AttributeType,
 }
 
 #[derive(Clone)]
+/// The data type of a given attribute
 pub enum AttributeType {
+    /// A single, scalar f32 value
     Scalar,
+    /// A vector value, ranging from 2 f32s to 4
     Vector(Dimension),
+    /// A 2D array of f32 values, ranging from 2x2 to 4x4
     Matrix(Dimension, Dimension),
 }
 
@@ -44,7 +52,7 @@ impl Attribute {
         &self.name
     }
 
-    pub fn size(&self) -> i32 {
+    pub(crate) fn size(&self) -> i32 {
         use AttributeType::*;
 
         match self.value {

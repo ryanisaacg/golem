@@ -1,3 +1,75 @@
+//! `golem` is an opinionated mostly-safe graphics API
+//!
+//! When possible, `golem` should make simple things safe (bind objects before acting on them, or
+//! check if they're bound for objects that are expensive to bind.) However, when not possible or
+//! convenient (bounds checking the indices in an element buffer, for example), `golem` provides
+//! unsafe APIs with well-defined safety conditions.
+//!
+//! A minimal example to display a triangle:
+//!
+//! ```rust
+//! # use golem::*;
+//! # use golem::Dimension::*;
+//! # fn func(ctx: &Context) -> Result<(), GolemError> {
+//! let vertices = [
+//!     // Position         Color
+//!     -0.5, -0.5,         1.0, 0.0, 0.0, 1.0,
+//!     0.5, -0.5,          0.0, 1.0, 0.0, 1.0,
+//!     0.0, 0.5,           0.0, 0.0, 1.0, 1.0
+//! ];
+//! let indices = [0, 1, 2];
+//! 
+//! let mut shader = ShaderProgram::new(
+//!     ctx,
+//!     ShaderDescription {
+//!         vertex_input: &[
+//!             Attribute::new("vert_position", AttributeType::Vector(D2)),
+//!             Attribute::new("vert_color", AttributeType::Vector(D4)),
+//!         ],
+//!         fragment_input: &[Attribute::new("frag_color", AttributeType::Vector(D4))],
+//!         uniforms: &[],
+//!         vertex_shader: r#" void main() {
+//!         gl_Position = vec4(vert_position, 0, 1);
+//!         frag_color = vert_color;
+//!     }"#,
+//!         fragment_shader: r#" void main() {
+//!         gl_FragColor = frag_color;
+//!     }"#,
+//!     },
+//! )?;
+//! 
+//! let mut vb = VertexBuffer::new(ctx)?;
+//! let mut eb = ElementBuffer::new(ctx)?;
+//! vb.set_data(&vertices);
+//! eb.set_data(&indices);
+//! shader.bind();
+//! 
+//! ctx.clear();
+//! unsafe {
+//!     shader.draw(&vb, &eb, 0..indices.len(), GeometryMode::Triangles)?;
+//! }
+//! # Ok(()) }
+//! ```
+//!
+//! The core type of `golem` is the [`Context`], which is constructed from the [`glow Context`].
+//! From the [`Context`], [`ShaderProgram`]s are created, which take in data from [`Buffer`]s. Once
+//! the data is uploaded to the GPU via [`Buffer::set_data`], it can be drawn via [`ShaderProgram::draw`].
+//!
+//! ## Initializing
+//!
+//! The user is respnsible for windowing and providing a valid [`glow Context`] to create a
+//! [`Context`]. You can try out the [`blinds`](https://crates.io/crates/blinds) crate, which works
+//! well with `golem`, but using `winit` directly or other windowing solutions like `sdl2` are also
+//! options.
+//!
+//! ## OpenGL Versions 
+//! It currently is implemented via glow, and it targets OpenGL 3.2 on desktop and WebGL 1 (so it
+//! should run on a wide range of hardware.) GL 3.2 is selected for maximum desktop availability,
+//! and WebGL 1 is available on 97% of clients to WebGL's 75% (taken from caniuse.com at time of
+//! writing.) 
+//!
+//! [`Context`]: crate::Context
+//! [`glow Context`]: glow::Context
 // TODO: add out-of-memory to GolemError?
 // TODO: unsafe audit: check for possible GL error conditions, and track them
 
@@ -30,34 +102,81 @@ pub(crate) enum Position {
     Output,
 }
 
+/// Used to determine whether shader uniforms are ints or floats
 pub enum NumberType {
     Int,
     Float,
 }
 
+/// How a pixel's color is laid out in memory
 pub enum ColorFormat {
+    /// One red pixel byte, followed by one blue, and one green
     RGB,
+    /// One red, blue, green, then alpha (transparency)
     RGBA,
 }
 
-#[derive(Copy, Clone)]
+impl ColorFormat {
+    pub fn bytes_per_pixel(&self) -> u32 {
+        match self {
+            ColorFormat::RGBA => 4,
+            ColorFormat::RGB => 3,
+        }
+    }
+
+    fn gl_format(&self) -> u32 {
+        match self {
+            ColorFormat::RGB => glow::RGB,
+            ColorFormat::RGBA => glow::RGBA,
+        }
+    }
+}
+
+#[derive(Copy, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+/// The dimensionality of a vector or matrix shader input
+///
+/// D2 indicates a Vector2 or Matrix2x2, etc.
 pub enum Dimension {
     D2 = 2,
     D3 = 3,
     D4 = 4,
 }
 
+#[derive(Copy, Clone, Hash, PartialEq, Eq)]
+/// The GeometryMode determines how the data is drawn during [`ShaderProgram::draw`]
 pub enum GeometryMode {
+    /// Each element forms a single point
+    ///
+    /// `[1, 2, 3, 4, 5, 6] -> [(1), (2), (3), (4), (5), (6)]`
     Points,
+    /// Each pair of elements forms a thin line
+    ///
+    /// `[1, 2, 3, 4, 5, 6] -> [(1, 2), (3, 4), (5, 6)]`
     Lines,
+    /// Each pair of elements forms a chain of lines
+    ///
+    /// `[1, 2, 3, 4, 5, 6] -> [(1, 2), (2, 3), (3, 4), (4, 5), (5, 6)]`
     LineStrip,
+    /// Each pair of elements forms a chain of lines, connected to the original
+    ///
+    /// `[1, 2, 3, 4, 5, 6] -> [(1, 2), (2, 3), (3, 4), (4, 5), (5, 6), (6, 1)]`
     LineLoop,
-    TriangleStrip,
-    TriangleFan,
+    /// Each trio of elements forms a distinct triangle
+    ///
+    /// `[1, 2, 3, 4, 5, 6] -> [(1, 2, 3), (4, 5, 6)]`
     Triangles,
+    /// Each trio of elements forms a triangle, with the next vertex taking the previous two
+    ///
+    /// `[1, 2, 3, 4, 5, 6] -> [(1, 2, 3), (2, 3, 4), (3, 4, 5), (4, 5, 6)]`
+    TriangleStrip,
+    /// The first elements forms the center of a fan, with each pair of vertices forming a triangle
+    ///
+    /// `[1, 2, 3, 4, 5, 6] -> [(1, 2, 3), (1, 3, 4), (1, 4, 5), (1, 5, 6)]`
+    TriangleFan,
 }
 
 #[derive(Debug)]
+/// The library's error conditions
 pub enum GolemError {
     /// The OpenGL Shader compilation failed, with the given error message
     ///

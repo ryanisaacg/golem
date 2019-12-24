@@ -1,5 +1,8 @@
 use crate::{Dimension, NumberType};
 
+/// A uniform value to pass in to the [`ShaderDescription`]
+///
+/// [`ShaderDescription`]: crate::ShaderDescription
 pub struct Uniform {
     pub name: &'static str,
     pub u_type: UniformType,
@@ -18,12 +21,19 @@ impl Uniform {
     }
 }
 
+/// The type of the uniform in GLSL
 pub enum UniformType {
+    /// Either an `int` or a `float`
     Scalar(NumberType),
+    /// A vector, either an `ivecn` or a `vecn` with the given dimension
     Vector(NumberType, Dimension),
+    /// A matrix with the given dimension
     Matrix(Dimension),
+    /// A texutre binding
     Sampler2D,
+    /// An array of another type
     Array(Box<UniformType>, usize),
+    /// A user-defined type, like a struct
     UserType(String),
 }
 
@@ -49,6 +59,11 @@ impl UniformType {
 }
 
 #[derive(Clone)]
+/// A value to provide to a uniform
+///
+/// Use [`ShaderProgram::set_uniform`] to provide it.
+///
+/// [`ShaderProgram::set_uniform`]: crate::ShaderProgram::set_uniform
 pub enum UniformValue {
     Int(i32),
     Float(f32),

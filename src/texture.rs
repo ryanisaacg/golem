@@ -1,7 +1,7 @@
 use super::*;
+use std::num::NonZeroU32;
 
-// TODO: unsafe verification
-
+/// An image stored on the GPU
 pub struct Texture {
     pub(crate) ctx: Context,
     pub(crate) id: GlTexture,
@@ -10,10 +10,10 @@ pub struct Texture {
 }
 
 impl Texture {
+    /// Create a new, empty texture
     pub fn new(ctx: &Context) -> Result<Texture, GolemError> {
         let ctx = Context(ctx.0.clone());
         let id = unsafe { ctx.0.gl.create_texture()? };
-        // TODO: is this an acceptable state to have a texture
         let tex = Texture {
             ctx,
             id,
@@ -25,12 +25,18 @@ impl Texture {
         Ok(tex)
     }
 
-    pub fn bind(ctx: &Context, tex: Option<&Texture>, bind_point: u32) {
-        let gl = &ctx.0.gl;
-        let value = tex.map(|tex| tex.id);
+    /// Mark the texture as active, allowing it to be used in shaders
+    ///
+    /// To use the texture in a shader, supply the same number as the `bind_point` to a
+    /// [`UniformValue::Int`], matching a [`Uniform`] with a [`UniformType::Sampler2D`].
+    ///
+    /// The value 0 is reserved by `golem`, so it cannot be passed to this function.
+    pub fn set_active(&self, bind_point: NonZeroU32) {
+        let gl = &self.ctx.0.gl;
         unsafe {
-            gl.active_texture(glow::TEXTURE0 + bind_point);
-            gl.bind_texture(glow::TEXTURE_2D, value);
+            gl.active_texture(glow::TEXTURE0 + bind_point.get());
+            gl.bind_texture(glow::TEXTURE_2D, Some(self.id));
+            gl.active_texture(glow::TEXTURE0);
         }
     }
 
@@ -42,10 +48,19 @@ impl Texture {
         self.height
     }
 
+    /// Set the image data associated with this texture
+    ///
+    /// If 'data' is None, the image will be created with no data at the given dimensions.
+    /// If it is Some, it needs to be at least as long as `width * height *
+    /// [`color.bytes_per_pixel`])
+    ///
+    /// [`color.bytes_per_pixel`]: ColorFormat::bytes_per_pixel
     pub fn set_image(&mut self, data: Option<&[u8]>, width: u32, height: u32, color: ColorFormat) {
-        // TODO: make into a recoverable error?
         assert!(width < glow::MAX_TEXTURE_SIZE);
         assert!(height < glow::MAX_TEXTURE_SIZE);
+        if let Some(data) = data {
+            assert!(data.len() >= (width * height * color.bytes_per_pixel()) as usize);
+        }
         self.width = width;
         self.height = height;
 
@@ -72,6 +87,12 @@ impl Texture {
         }
     }
 
+    /// Set a region of the texture data
+    ///
+    /// The data provided must be enough to cover `(width - x) * (height - y) *
+    /// [`color.bytes_per_pixel()`]`. Also, the region must be within the texture's bounds.
+    ///
+    /// [`color.bytes_per_pixel()`]: ColorFormat::bytes_per_pixel
     pub fn set_subimage(
         &self,
         data: &[u8],
@@ -87,6 +108,8 @@ impl Texture {
             ColorFormat::RGB => glow::RGB,
             ColorFormat::RGBA => glow::RGBA,
         };
+        let required_data_len = (width - x) * (height - y) * color.bytes_per_pixel();
+        assert!(data.len() >= required_data_len as usize);
         let gl = &self.ctx.0.gl;
         unsafe {
             gl.bind_texture(glow::TEXTURE_2D, Some(self.id));
@@ -111,29 +134,39 @@ impl Texture {
         unsafe {
             gl.bind_texture(glow::TEXTURE_2D, Some(self.id));
             gl.tex_parameter_i32(glow::TEXTURE_2D, param, value);
-            gl.bind_texture(glow::TEXTURE_2D, None);
         }
     }
 
+    /// Determine how the texture should scale down
     pub fn set_minification(&self, min: TextureFilter) {
         self.set_texture_param(glow::TEXTURE_MIN_FILTER, min.to_gl());
     }
 
+    /// Determine how the texture should scale up
     pub fn set_magnification(&self, max: TextureFilter) {
         self.set_texture_param(glow::TEXTURE_MAG_FILTER, max.to_gl());
     }
 
+    /// Determine how the texture is wrapped horizontally
     pub fn set_wrap_h(&self, wrap: TextureWrap) {
         self.set_texture_param(glow::TEXTURE_WRAP_S, wrap.to_gl());
     }
 
+    /// Determine how the texture is wrapped vertically
     pub fn set_wrap_v(&self, wrap: TextureWrap) {
         self.set_texture_param(glow::TEXTURE_WRAP_T, wrap.to_gl());
     }
 }
 
+/// How textures should scale when being drawn at non-native sizes
 pub enum TextureFilter {
+    /// Smooth out the texture samples as the texture stretches or squashes
+    ///
+    /// This is best for textures you want to blur as they scale
     Linear,
+    /// Pick the nearest texture sample as the texture stretches or squashes
+    ///
+    /// This is best for textures you want to pixelate as they scale
     Nearest,
 }
 
@@ -146,9 +179,13 @@ impl TextureFilter {
     }
 }
 
+/// How the texture should wrap if a sample is outside the edge
 pub enum TextureWrap {
+    /// Repeat as though the texture was endlessly tiled
     Repeat,
+    /// Choose the closest sample in the texture
     ClampToEdge,
+    /// Repeat as though the texture was endlessly tiled, but flipping each time
     MirroredRepeat,
 }
 

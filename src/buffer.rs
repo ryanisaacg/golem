@@ -1,9 +1,22 @@
 use crate::*;
 
+/// A buffer to store the vertices on the GPU
 pub type VertexBuffer = Buffer<f32>;
 
+/// A buffer to store the indices that make up the geometry elements
+///
+/// See the [`GeometryMode`] for how the elements will be interpreted.
+///
+/// [`GeometryMode`]: crate::GeometryMode
 pub type ElementBuffer = Buffer<u32>;
 
+/// A collection of values stored contiguously on the GPU, as either a [`VertexBuffer`] or an
+/// [`ElementBuffer`]
+///
+/// Buffers serve as input to [`draw calls`], by passing the input to the [`ShaderProgram`]
+///
+/// [`ShaderProgram`]: crate::ShaderProgram
+/// [`draw calls`]: crate::ShaderProgram::draw
 pub struct Buffer<T> {
     ctx: Context,
     id: GlBuffer,
@@ -13,6 +26,7 @@ pub struct Buffer<T> {
 }
 
 impl Buffer<f32> {
+    /// Create a [`VertexBuffer`] to store the vertex values
     pub fn new(ctx: &Context) -> Result<Self, GolemError> {
         let ctx = Context(ctx.0.clone());
         let id = unsafe { ctx.0.gl.create_buffer() }?;
@@ -28,6 +42,7 @@ impl Buffer<f32> {
 }
 
 impl Buffer<u32> {
+    /// Create a [`ElementBuffer`] to store the index values
     pub fn new(ctx: &Context) -> Result<Self, GolemError> {
         let ctx = Context(ctx.0.clone());
         let id = unsafe { ctx.0.gl.create_buffer() }?;
@@ -49,10 +64,15 @@ impl<T: bytemuck::Pod> Buffer<T> {
         }
     }
 
+    /// The current capacity of the buffer in bytes
     pub fn size(&self) -> usize {
         self.length
     }
 
+    /// Set the data this buffer holds, resizing it if necessary
+    ///
+    /// The conditions under which the buffer is reallocated are an implementation detail, and it's
+    /// best not to rely on them.
     pub fn set_data(&mut self, data: &[T]) {
         let gl = &self.ctx.0.gl;
 
@@ -73,6 +93,10 @@ impl<T: bytemuck::Pod> Buffer<T> {
         }
     }
 
+    /// Set some range of the buffer, within the existing capacity
+    ///
+    /// The range (the start to the end of the data) must fall within the existing buffer's
+    /// capacity, or this method will panic.
     pub fn set_sub_data(&self, start: usize, data: &[T]) {
         let u8_buffer = bytemuck::cast_slice(data);
         let data_length = u8_buffer.len();

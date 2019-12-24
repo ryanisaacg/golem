@@ -2,14 +2,39 @@ use crate::*;
 use std::mem::size_of;
 use std::ops::Range;
 
+/// The parameters to create a [`ShaderProgram`]
 pub struct ShaderDescription<'a> {
+    /// The inputs to the vertex shader stage, which are also the inputs to the whole shader
     pub vertex_input: &'a [Attribute],
+    /// The inputs to the fragment shader stage, which are also the outputs from the vertex shader
     pub fragment_input: &'a [Attribute],
+    /// The uniform values available to all shader stages, across all vertices of a draw call
+    ///
+    /// Uniforms can be bound with [`ShaderProgram::set_uniform`]
     pub uniforms: &'a [Uniform],
+    /// The text of the vertex shader stage
+    ///
+    /// Do not include the vertex inputs, outputs, or uniforms, use the [`vertex_input`],
+    /// [`fragment_input`], and [`uniforms`] fields instead. The inputs to this stage are
+    /// defined as the [`vertex_input`] and the ouptuts are the [`fragment_input`] as well as
+    /// `gl_Position`, a vec4 that represents the vertex's position.
+    ///
+    /// [`vertex_input`]: ShaderDescription::vertex_input
+    /// [`fragment_input`]: ShaderDescription::fragment_input
+    /// [`uniforms`]: ShaderDescription::uniforms
     pub vertex_shader: &'a str,
+    /// The text of the fragment shader stage
+    ///
+    /// See the documentation of the [`vertex_shader`]. The inputs to this stage are
+    /// defined as the [`fragment_input`] and the ouptut is `gl_FragColor`, a vec4 that represents
+    /// the RGBA color of the fragment.
+    ///
+    /// [`vertex_shader`]: ShaderDescription::vertex_shader
+    /// [`fragment_input`]: ShaderDescription::fragment_input
     pub fragment_shader: &'a str,
 }
 
+/// A GPU program that draws data to the screen
 pub struct ShaderProgram {
     ctx: crate::Context,
     id: GlProgram,
@@ -46,6 +71,7 @@ fn generate_shader_text(
 }
 
 impl ShaderProgram {
+    /// Create a shader program with the given [`ShaderDescription`]
     pub fn new(ctx: &Context, desc: ShaderDescription) -> Result<ShaderProgram, GolemError> {
         let gl = &ctx.0.gl;
         unsafe {
@@ -151,6 +177,7 @@ impl ShaderProgram {
         }
     }
 
+    /// Check if this shader program is currently bound to be operated on
     pub fn is_bound(&self) -> bool {
         match *self.ctx.0.current_program.borrow() {
             Some(program) => self.id == program,
@@ -158,6 +185,7 @@ impl ShaderProgram {
         }
     }
 
+    /// Set a uniform value, assuming the shader is bound by [`ShaderProgram::bind`]
     pub fn set_uniform(&self, name: &str, uniform: UniformValue) -> Result<(), GolemError> {
         if self.is_bound() {
             let gl = &self.ctx.0.gl;
@@ -185,6 +213,10 @@ impl ShaderProgram {
         }
     }
 
+    /// Bind this shader to use it, either to [`set a uniform`] or to [`draw`]
+    ///
+    /// [`set a uniform`]: ShaderProgram::set_uniform
+    /// [`draw`]: ShaderProgram::draw
     pub fn bind(&mut self) {
         let gl = &self.ctx.0.gl;
         log::trace!("Binding the shader and buffers");
@@ -221,6 +253,11 @@ impl ShaderProgram {
         Ok(())
     }
 
+    /// Set up a [`VertexBuffer`] and [`ElementBuffer`] to draw multiple times with the same
+    /// buffers.
+    ///
+    /// See [`ShaderProgram::draw_prepared`] to execute the draw calls. If you're only drawing the
+    /// buffers once before replacing their data, see [`ShaderProgram::draw`].
     pub fn prepare_draw(&self, vb: &VertexBuffer, eb: &ElementBuffer) -> Result<(), GolemError> {
         if !self.is_bound() {
             Err(GolemError::NotCurrentProgram)
