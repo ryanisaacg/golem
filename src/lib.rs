@@ -18,7 +18,7 @@
 //!     0.0, 0.5,           0.0, 0.0, 1.0, 1.0
 //! ];
 //! let indices = [0, 1, 2];
-//! 
+//!
 //! let mut shader = ShaderProgram::new(
 //!     ctx,
 //!     ShaderDescription {
@@ -37,13 +37,13 @@
 //!     }"#,
 //!     },
 //! )?;
-//! 
+//!
 //! let mut vb = VertexBuffer::new(ctx)?;
 //! let mut eb = ElementBuffer::new(ctx)?;
 //! vb.set_data(&vertices);
 //! eb.set_data(&indices);
 //! shader.bind();
-//! 
+//!
 //! ctx.clear();
 //! unsafe {
 //!     shader.draw(&vb, &eb, 0..indices.len(), GeometryMode::Triangles)?;
@@ -62,11 +62,11 @@
 //! well with `golem`, but using `winit` directly or other windowing solutions like `sdl2` are also
 //! options.
 //!
-//! ## OpenGL Versions 
+//! ## OpenGL Versions
 //! It currently is implemented via glow, and it targets OpenGL 3.2 on desktop and WebGL 1 (so it
 //! should run on a wide range of hardware.) GL 3.2 is selected for maximum desktop availability,
 //! and WebGL 1 is available on 97% of clients to WebGL's 75% (taken from caniuse.com at time of
-//! writing.) 
+//! writing.)
 //!
 //! [`Context`]: crate::Context
 //! [`glow Context`]: glow::Context

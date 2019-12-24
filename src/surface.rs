@@ -1,6 +1,5 @@
 use crate::*;
 
-
 /// A framebuffer that allows render-to-texture
 pub struct Surface {
     pub(crate) ctx: Context,
@@ -14,11 +13,7 @@ impl Surface {
         let ctx = Context(ctx.0.clone());
         let id = unsafe { ctx.0.gl.create_framebuffer() }?;
 
-        Ok(Surface {
-            ctx,
-            id,
-            texture,
-        })
+        Ok(Surface { ctx, id, texture })
     }
 
     /// Set the current render target to this surface
@@ -50,7 +45,7 @@ impl Surface {
     pub fn texture_mut(&mut self) -> &mut Texture {
         &mut self.texture
     }
-    
+
     /// Check if this surface is bound to be operated on
     pub fn is_bound(&self) -> bool {
         match *self.ctx.0.current_surface.borrow() {
@@ -74,10 +69,16 @@ impl Surface {
         format: ColorFormat,
         data: &mut [u8],
     ) {
-        assert!(self.is_bound());
+        assert!(
+            self.is_bound(),
+            "The surface wasn't bound when get_pixel_data was called"
+        );
         let bytes_per_pixel = format.bytes_per_pixel();
         let length = (width * height * bytes_per_pixel) as usize;
-        assert!(data.len() >= length);
+        assert!(
+            data.len() >= length,
+            "The buffer was not large enough to hold the data"
+        );
         let format = format.gl_format();
         let gl = &self.ctx.0.gl;
         unsafe {

@@ -100,7 +100,10 @@ impl<T: bytemuck::Pod> Buffer<T> {
     pub fn set_sub_data(&self, start: usize, data: &[T]) {
         let u8_buffer = bytemuck::cast_slice(data);
         let data_length = u8_buffer.len();
-        assert!(start + data_length < self.length);
+        assert!(
+            start + data_length < self.length,
+            "The data runs past the end of the buffer"
+        );
         log::trace!("Writing data to OpenGL buffer");
         unsafe {
             self.ctx

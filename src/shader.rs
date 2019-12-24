@@ -246,7 +246,10 @@ impl ShaderProgram {
         range: Range<usize>,
         geometry: GeometryMode,
     ) -> Result<(), GolemError> {
-        assert!(range.end <= eb.size());
+        assert!(
+            range.end <= eb.size(),
+            "The range exceeded the size of the element buffer"
+        );
         // prepare_draw also takes care of ensuring this program is current
         self.prepare_draw(vb, eb)?;
         self.draw_prepared(range, geometry);

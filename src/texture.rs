@@ -56,10 +56,19 @@ impl Texture {
     ///
     /// [`color.bytes_per_pixel`]: ColorFormat::bytes_per_pixel
     pub fn set_image(&mut self, data: Option<&[u8]>, width: u32, height: u32, color: ColorFormat) {
-        assert!(width < glow::MAX_TEXTURE_SIZE);
-        assert!(height < glow::MAX_TEXTURE_SIZE);
+        assert!(
+            width < glow::MAX_TEXTURE_SIZE,
+            "The texture width was bigger than the maximum size"
+        );
+        assert!(
+            height < glow::MAX_TEXTURE_SIZE,
+            "The texture height was bigger than the maximum size"
+        );
         if let Some(data) = data {
-            assert!(data.len() >= (width * height * color.bytes_per_pixel()) as usize);
+            assert!(
+                data.len() >= (width * height * color.bytes_per_pixel()) as usize,
+                "The texture data wasn't big enough for the width, height, and format supplied"
+            );
         }
         self.width = width;
         self.height = height;
@@ -102,8 +111,14 @@ impl Texture {
         height: u32,
         color: ColorFormat,
     ) {
-        assert!(x + width <= self.width);
-        assert!(y + height <= self.height);
+        assert!(
+            x + width <= self.width,
+            "The region over-ran the width of the texture"
+        );
+        assert!(
+            y + height <= self.height,
+            "The region over-ran the height of the texture"
+        );
         let format = match color {
             ColorFormat::RGB => glow::RGB,
             ColorFormat::RGBA => glow::RGBA,
