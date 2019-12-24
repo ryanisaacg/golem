@@ -225,8 +225,8 @@ impl ShaderProgram {
         if !self.is_bound() {
             Err(GolemError::NotCurrentProgram)
         } else {
-            eb.bind(glow::ELEMENT_ARRAY_BUFFER);
-            vb.bind(glow::ARRAY_BUFFER);
+            eb.bind();
+            vb.bind();
             let stride: i32 = self.input.iter().map(|attr| attr.size()).sum();
             let stride = stride * size_of::<f32>() as i32;
             let mut offset = 0;
