@@ -109,21 +109,26 @@ async fn app(
     loop {
         while let Some(_) = events.next_event().await {}
         ctx.clear();
-        let c = angle.cos();
-        let s = angle.sin();
-        let rotate = [c, -s, s, c];
-        angle += 0.001;
-        shader.set_uniform("rotate", UniformValue::Matrix2(rotate))?;
-        shader.set_uniform("translate", UniformValue::Vector2([-0.5, -0.5]))?;
-        unsafe {
-            shader.draw_prepared(0..indices.len(), GeometryMode::Triangles);
-            shader.set_uniform("translate", UniformValue::Vector2([-0.5, 0.5]))?;
-            shader.draw_prepared(0..indices.len(), GeometryMode::Triangles);
-            shader.set_uniform("translate", UniformValue::Vector2([0.5, 0.5]))?;
-            shader.draw_prepared(0..indices.len(), GeometryMode::Triangles);
-            shader.set_uniform("translate", UniformValue::Vector2([0.5, -0.5]))?;
-            shader.draw_prepared(0..indices.len(), GeometryMode::Triangles);
-        }
+        let draw = |angle: f32, translate| -> Result<(), GolemError> {
+            let c = angle.cos();
+            let s = angle.sin();
+            let rotate = [c, -s, s, c];
+            shader.set_uniform("rotate", UniformValue::Matrix2(rotate))?;
+            shader.set_uniform("translate", UniformValue::Vector2(translate))?;
+            unsafe {
+                shader.draw_prepared(0..indices.len(), GeometryMode::Triangles);
+            }
+
+            Ok(())
+        };
+        draw(0.0, [0.0, 0.0])?;
+        draw(angle, [-0.5, -0.5])?;
+        draw(angle / 2.0, [-0.5, 0.5])?;
+        draw(angle / 4.0, [0.5, 0.5])?;
+        draw(angle / 8.0, [0.5, -0.5])?;
+
+        angle += 0.005;
+
         window.present();
     }
 }
