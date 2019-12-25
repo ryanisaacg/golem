@@ -47,24 +47,21 @@ async fn app(
     vb.set_data(&vertices);
     eb.set_data(&indices);
     shader.bind();
-    let mut surface = Surface::new(ctx)?;
     let mut backing_texture = Texture::new(ctx)?;
     backing_texture.set_image(None, 100, 100, ColorFormat::RGBA);
     ctx.set_viewport(0, 0, backing_texture.width(), backing_texture.height());
-    surface.set_texture(Some(backing_texture));
+    let surface = Surface::new(ctx, backing_texture)?;
 
-    Surface::bind(ctx, Some(&surface));
+    surface.bind();
     ctx.clear();
     unsafe {
         shader.draw(&vb, &eb, 0..indices.len(), GeometryMode::Triangles)?;
     }
-    Surface::bind(ctx, None);
+    Surface::unbind(ctx);
 
     let size = window.size();
     let scale = window.scale_factor();
     ctx.set_viewport(0, 0, (size.x * scale) as u32, (size.y * scale) as u32);
-
-    Texture::bind(ctx, surface.texture(), 0);
 
     // Step 2: Draw a few copies of this triangle to the screen
     // Also, for fun, let's rotate them dynamically
@@ -103,7 +100,10 @@ async fn app(
     eb.set_data(&indices);
     shader.bind();
     shader.prepare_draw(&vb, &eb)?;
-    shader.set_uniform("image", UniformValue::Int(0))?;
+    shader.set_uniform("image", UniformValue::Int(1))?;
+    
+    let bind_point = std::num::NonZeroU32::new(1).unwrap();
+    surface.texture().set_active(bind_point);
 
     let mut angle = 0f32;
     loop {

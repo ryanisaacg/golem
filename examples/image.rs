@@ -59,9 +59,10 @@ async fn app(
     vb.set_data(&vertices);
     eb.set_data(&indices);
     shader.bind();
-    shader.set_uniform("image", UniformValue::Int(0))?;
+    shader.set_uniform("image", UniformValue::Int(1))?;
 
-    Texture::bind(ctx, Some(&texture), 0);
+    let bind_point = std::num::NonZeroU32::new(1).unwrap();
+    texture.set_active(bind_point);
 
     ctx.clear();
     unsafe {
