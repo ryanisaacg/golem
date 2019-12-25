@@ -101,7 +101,7 @@ async fn app(
     shader.bind();
     shader.prepare_draw(&vb, &eb)?;
     shader.set_uniform("image", UniformValue::Int(1))?;
-    
+
     let bind_point = std::num::NonZeroU32::new(1).unwrap();
     surface.texture().set_active(bind_point);
 
