@@ -11,7 +11,19 @@ impl Surface {
     /// Create a new Surface to render to, backed by the given texture
     pub fn new(ctx: &Context, texture: Texture) -> Result<Surface, GolemError> {
         let ctx = Context(ctx.0.clone());
-        let id = unsafe { ctx.0.gl.create_framebuffer() }?;
+        let gl = &ctx.0.gl;
+        let id = unsafe { gl.create_framebuffer() }?;
+        unsafe {
+            gl.bind_framebuffer(glow::FRAMEBUFFER, Some(id));
+            gl.framebuffer_texture_2d(
+                glow::FRAMEBUFFER,
+                glow::COLOR_ATTACHMENT0,
+                glow::TEXTURE_2D,
+                Some(texture.id),
+                0,
+            );
+            gl.bind_framebuffer(glow::FRAMEBUFFER, *ctx.0.current_surface.borrow());
+        }
 
         Ok(Surface { ctx, id, texture })
     }
@@ -20,7 +32,7 @@ impl Surface {
     ///
     /// Also necessary for operations like [`Surface::get_pixel_data`]
     pub fn bind(&self) {
-        *self.ctx.0.current_program.borrow_mut() = Some(self.id);
+        *self.ctx.0.current_surface.borrow_mut() = Some(self.id);
         let gl = &self.ctx.0.gl;
         unsafe {
             gl.bind_framebuffer(glow::FRAMEBUFFER, Some(self.id));
@@ -29,7 +41,7 @@ impl Surface {
 
     /// Unbind the surface and set the render target to the screen
     pub fn unbind(ctx: &Context) {
-        *ctx.0.current_program.borrow_mut() = None;
+        *ctx.0.current_surface.borrow_mut() = None;
         let gl = &ctx.0.gl;
         unsafe {
             gl.bind_framebuffer(glow::FRAMEBUFFER, None);
