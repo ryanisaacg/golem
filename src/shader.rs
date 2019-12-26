@@ -326,7 +326,7 @@ impl ShaderProgram {
             ShaderProgram::shape_type(geometry),
             length as i32,
             glow::UNSIGNED_INT,
-            range.start as i32,
+            (range.start * size_of::<u32>()) as i32,
         );
     }
 
