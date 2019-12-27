@@ -27,7 +27,8 @@ pub struct ShaderDescription<'a> {
     ///
     /// See the documentation of the [`vertex_shader`]. The inputs to this stage are
     /// defined as the [`fragment_input`] and the ouptut is `gl_FragColor`, a vec4 that represents
-    /// the RGBA color of the fragment.
+    /// the RGBA color of the fragment. Use the function `texture` to read values from GLSL
+    /// textures; it will be converted to `texture2D` on the web backend.
     ///
     /// [`vertex_shader`]: ShaderDescription::vertex_shader
     /// [`fragment_input`]: ShaderDescription::fragment_input
@@ -107,7 +108,9 @@ impl ShaderProgram {
             let fragment = gl.create_shader(glow::FRAGMENT_SHADER)?;
             // Handle creating the output color and giving it a name, but only on desktop gl
             #[cfg(target_arch = "wasm32")]
-            let (fragment_output, fragment_body) = { (&[], desc.fragment_shader) };
+            let (fragment_output, fragment_body) =
+                { (&[], &desc.fragment_shader.replace("texture", "texture2D")) };
+
             #[cfg(not(target_arch = "wasm32"))]
             let (fragment_output, fragment_body) = {
                 (
