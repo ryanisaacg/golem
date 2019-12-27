@@ -83,7 +83,7 @@ impl Texture {
             gl.tex_image_2d(
                 glow::TEXTURE_2D,
                 0,
-                glow::RGBA as i32,
+                format as i32,
                 width as i32,
                 height as i32,
                 0,
