@@ -233,12 +233,21 @@ impl ShaderProgram {
     /// consumes 3 vertices into a filled triangle, lines consumes 2 vertices into a thin line,
     /// etc.
     ///
+    /// The `ShaderProgram` must be bound first, see [`ShaderProgram::bind`].
+    ///
     /// # Safety
     ///
-    /// The source of unsafety is the range values in the ElementBuffer: if they are out of bounds
-    /// of the VertexBuffer, this will result in out-of-bounds reads on the GPU and
-    /// therefore undefined behavior. The caller is responsible for ensuring all elements are
-    /// valid and in-bounds.
+    /// The safety concerns to keep in mind:
+    ///
+    /// 1. The elements in the [`ElementBuffer`] are not checked against the size of the
+    ///    [`VertexBuffer`]. If they are illegal indices, this will result in out-of-bounds reads on
+    ///    the GPU and therefore undefined behavior. The caller is responsible for ensuring all
+    ///    elements are valid and in-bounds.
+    /// 2. A texture-rendering feedback loop is undefined behavior. If rendering to an offscreen
+    ///    texture via [`Surface::bind`], that target texture may not be bound for drawing. Drawing
+    ///    to some texture while using that texture as input to the draw is undefined behavior.
+    ///
+    /// [`Surface::bind`]: crate::Surface::bind
     pub unsafe fn draw(
         &self,
         vb: &VertexBuffer,
@@ -258,6 +267,8 @@ impl ShaderProgram {
 
     /// Set up a [`VertexBuffer`] and [`ElementBuffer`] to draw multiple times with the same
     /// buffers.
+    ///
+    /// The `ShaderProgram` must be bound first, see [`ShaderProgram::bind`].
     ///
     /// See [`ShaderProgram::draw_prepared`] to execute the draw calls. If you're only drawing the
     /// buffers once before replacing their data, see [`ShaderProgram::draw`].
@@ -313,6 +324,7 @@ impl ShaderProgram {
     /// 3. The elements in the prepared buffer must correspond to valid locations within the vertex
     ///    buffer. See [`draw`] for details.
     /// 4. This shader must still be bound (see [`bind`])
+    /// 5. There may not be a texture feedback loop. See [`draw`] for details.
     ///
     /// [`prepare_draw`]: ShaderProgram::prepare_draw
     /// [`draw`]: ShaderProgram::draw
