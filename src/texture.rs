@@ -50,12 +50,17 @@ impl Texture {
 
     /// Set the image data associated with this texture
     ///
+    /// `width` and `height` must both be powers of 2 and less than the maximum texture size of the
+    /// GPU, given by [`glow::MAX_TEXTURE_SIZE`]
+    ///
     /// If 'data' is None, the image will be created with no data at the given dimensions.
     /// If it is Some, it needs to be at least as long as `width * height *
     /// [`color.bytes_per_pixel`])
     ///
     /// [`color.bytes_per_pixel`]: ColorFormat::bytes_per_pixel
     pub fn set_image(&mut self, data: Option<&[u8]>, width: u32, height: u32, color: ColorFormat) {
+        assert!(width > 0, "The texture width was 0",);
+        assert!(height > 0, "The texture width was 0",);
         assert!(
             width < glow::MAX_TEXTURE_SIZE,
             "The texture width was bigger than the maximum size"
@@ -63,6 +68,14 @@ impl Texture {
         assert!(
             height < glow::MAX_TEXTURE_SIZE,
             "The texture height was bigger than the maximum size"
+        );
+        assert!(
+            width & (width - 1) == 0,
+            "The texture width was not a power of 2"
+        );
+        assert!(
+            height & (height - 1) == 0,
+            "The texture height was not a power of 2"
         );
         if let Some(data) = data {
             assert!(
