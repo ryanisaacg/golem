@@ -1,3 +1,5 @@
+# Golem
+
 `golem` is an opinionated mostly-safe graphics API
 
  When possible, `golem` should make simple things safe (bind objects before acting on them, or
@@ -51,14 +53,14 @@
  # Ok(()) }
  ```
 
-The core type of `golem` is the [`Context`], which is constructed from the [`glow Context`].
- From the [`Context`], [`ShaderProgram`]s are created, which take in data from [`Buffer`]s. Once
- the data is uploaded to the GPU via [`Buffer::set_data`], it can be drawn via [`ShaderProgram::draw`].
+The core type of `golem` is the `Context`, which is constructed from the `glow::Context`.
+ From the `Context`, `ShaderProgram`s are created, which take in data from `Buffer`s. Once
+ the data is uploaded to the GPU via `Buffer::set_data`, it can be drawn via `ShaderProgram::draw`.
 
  ## Initializing
 
- The user is respnsible for windowing and providing a valid [`glow Context`] to create a
- [`Context`]. You can try out the [`blinds`](https://crates.io/crates/blinds) crate, which works
+ The user is respnsible for windowing and providing a valid glow Context to create a
+ `Context`. You can try out the [`blinds`](https://crates.io/crates/blinds) crate, which works
  well with `golem`, but using `winit` directly or other windowing solutions like `sdl2` are also
  options.
 
