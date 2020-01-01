@@ -41,8 +41,8 @@
      )?;
      let mut vb= VertexBuffer::new(ctx)?;
      let mut eb  ElementBuffer::new(ctx)?;
-     vb.set_data(vertices);
-     eb.set_data(&ndices);
+     vb.set_data(&vertices);
+     eb.set_data(&indices);
      shader.bind();
      ctx.clear();
      unsafe {
