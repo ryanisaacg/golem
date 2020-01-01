@@ -80,6 +80,7 @@ type GlProgram = <glow::Context as HasContext>::Program;
 type GlShader = <glow::Context as HasContext>::Shader;
 type GlFramebuffer = <glow::Context as HasContext>::Framebuffer;
 type GlBuffer = <glow::Context as HasContext>::Buffer;
+type GlVertexArray = <glow::Context as HasContext>::VertexArray;
 
 mod attribute;
 mod buffer;

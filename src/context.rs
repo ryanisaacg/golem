@@ -1,4 +1,4 @@
-use crate::{GlFramebuffer, GlProgram, GolemError};
+use crate::{GlFramebuffer, GlProgram, GlVertexArray, GolemError};
 use glow::HasContext;
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -10,8 +10,7 @@ pub(crate) struct ContextContents {
     pub(crate) gl: glow::Context,
     pub(crate) current_program: RefCell<Option<GlProgram>>,
     pub(crate) current_surface: RefCell<Option<GlFramebuffer>>,
-    #[cfg(not(target_arch = "wasm32"))]
-    vao: u32,
+    vao: GlVertexArray,
 }
 
 impl Drop for ContextContents {
@@ -19,7 +18,6 @@ impl Drop for ContextContents {
         // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glDeleteVertexArrays.xhtml
         // glow handles passing in the pointer to our value, and GL will silently ignore invalid
         // values
-        #[cfg(not(target_arch = "wasm32"))]
         unsafe {
             self.gl.delete_vertex_array(self.vao);
         }
@@ -29,7 +27,6 @@ impl Drop for ContextContents {
 impl Context {
     /// Create an instance from an OpenGL context
     pub fn from_glow(gl: glow::Context) -> Result<Context, GolemError> {
-        #[cfg(not(target_arch = "wasm32"))]
         let vao = unsafe {
             // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glGenVertexArrays.xhtml
             // glow handles passing in '1' and returning the value to us
@@ -45,7 +42,6 @@ impl Context {
             gl,
             current_program: RefCell::new(None),
             current_surface: RefCell::new(None),
-            #[cfg(not(target_arch = "wasm32"))]
             vao,
         }));
         contents.set_clear_color(0.0, 0.0, 0.0, 1.0);
