@@ -185,7 +185,7 @@ pub enum GolemError {
     /// Some general error bubbling up from the GL context
     ContextError(String),
     /// An attempt was made to bind to an illegal uniform
-    NoSuchUniform(&'static str),
+    NoSuchUniform(String),
     /// An operation was performed on a shader that wasn't bound
     ///
     /// Shader operations include setting uniforms and drawing
