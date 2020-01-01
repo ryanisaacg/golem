@@ -10,13 +10,13 @@ These extensions are currently required for Golem:
 
 - OES_element_index_uint
 - OES_vertex_array_object
+- EXT_blend_minmax
 
 ## Possible Extensions
 
 These extensions may be required in the future:
 
 - ANGLE_instanced_arrays
-- EXT_blend_minmax
 - EXT_frag_depth
 - EXT_sRGB
 - EXT_shader_texture_lod

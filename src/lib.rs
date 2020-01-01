@@ -90,6 +90,8 @@ mod surface;
 mod texture;
 mod uniform;
 
+pub mod blend;
+
 pub use self::attribute::{Attribute, AttributeType};
 pub use self::buffer::{Buffer, ElementBuffer, VertexBuffer};
 pub use self::context::Context;
