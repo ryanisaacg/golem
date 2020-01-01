@@ -1,3 +1,4 @@
+use crate::blend::{BlendEquation, BlendFunction, BlendMode};
 use crate::{GlFramebuffer, GlProgram, GlVertexArray, GolemError};
 use glow::HasContext;
 use std::cell::RefCell;
@@ -81,6 +82,67 @@ impl Context {
         let gl = &self.0.gl;
         unsafe {
             gl.clear(glow::COLOR_BUFFER_BIT | glow::DEPTH_BUFFER_BIT);
+        }
+    }
+
+    /// Set the blend mode, with `None` disabling blending
+    ///
+    /// See the documentation for [`BlendMode`] for the various blending options
+    pub fn set_blend_mode(&self, blend_state: Option<BlendMode>) {
+        let gl = &self.0.gl;
+        match blend_state {
+            Some(BlendMode {
+                equation,
+                function,
+                global_color: [r, g, b, a],
+            }) => unsafe {
+                // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glEnable.xhtml
+                // gl::BLEND is on the whitelist
+                gl.enable(glow::BLEND);
+
+                // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glBlendEquation.xhtml
+                // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glBlendEquationSeparate.xhtml
+                // The to_gl() function only produces valid values
+                match equation {
+                    BlendEquation::Same(eq) => gl.blend_equation(eq.to_gl()),
+                    BlendEquation::Separate { color, alpha } => {
+                        gl.blend_equation_separate(color.to_gl(), alpha.to_gl());
+                    }
+                }
+
+                // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glBlendFunc.xhtml
+                // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glBlendFuncSeparate.xhtml
+                // The to_gl() function only produces valid values
+                match function {
+                    BlendFunction::Same {
+                        source,
+                        destination,
+                    } => {
+                        gl.blend_func(source.to_gl(), destination.to_gl());
+                    }
+                    BlendFunction::Separate {
+                        source_color,
+                        source_alpha,
+                        destination_alpha,
+                        destination_color,
+                    } => {
+                        gl.blend_func_separate(
+                            source_color.to_gl(),
+                            source_alpha.to_gl(),
+                            destination_alpha.to_gl(),
+                            destination_color.to_gl(),
+                        );
+                    }
+                }
+
+                // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glBlendColor.xhtml
+                gl.blend_color(r, g, b, a);
+            },
+            None => unsafe {
+                // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glEnable.xhtml
+                // gl::BLEND is on the whitelist
+                gl.disable(glow::BLEND);
+            },
         }
     }
 }
