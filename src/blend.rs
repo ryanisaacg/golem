@@ -167,7 +167,7 @@ pub enum BlendFactor {
 }
 
 impl BlendFactor {
-    pub(crate) fn to_gl(&self) -> u32 {
+    pub(crate) fn to_gl(self) -> u32 {
         use BlendChannel::*;
         use BlendFactor::{Color as Col, One, Zero};
         use BlendInput::*;
