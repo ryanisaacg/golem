@@ -102,7 +102,7 @@ pub enum BlendOperation {
 }
 
 impl BlendOperation {
-    pub(crate) fn to_gl(&self) -> u32 {
+    pub(crate) fn to_gl(self) -> u32 {
         use BlendOperation::*;
         match self {
             Add => glow::FUNC_ADD,
