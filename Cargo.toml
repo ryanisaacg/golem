@@ -8,6 +8,7 @@ keywords = ["gl", "opengl", "webgl", "graphics",]
 license = "MIT OR Apache-2.0"
 edition = "2018"
 repository = "https://github.com/ryanisaacg/golem"
+readme = "README.md"
 
 [features]
 stdweb = ["glow/stdweb"]
