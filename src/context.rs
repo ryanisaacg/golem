@@ -87,6 +87,8 @@ impl Context {
 
     /// Set the blend mode, with `None` disabling blending
     ///
+    /// By default, this is `None`
+    ///
     /// See the documentation for [`BlendMode`] for the various blending options
     pub fn set_blend_mode(&self, blend_state: Option<BlendMode>) {
         let gl = &self.0.gl;
