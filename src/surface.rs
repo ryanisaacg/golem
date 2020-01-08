@@ -25,7 +25,11 @@ impl Surface {
             gl.bind_framebuffer(glow::FRAMEBUFFER, *ctx.0.current_surface.borrow());
         }
 
-        Ok(Surface { ctx, id, texture: Some(texture) })
+        Ok(Surface {
+            ctx,
+            id,
+            texture: Some(texture),
+        })
     }
 
     /// Check if a texture is attached to this Surface
@@ -103,7 +107,6 @@ impl Surface {
             gl.bind_framebuffer(glow::FRAMEBUFFER, None);
         }
     }
-
 
     /// Get the pixel data and write it to a buffer
     ///
