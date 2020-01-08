@@ -50,7 +50,7 @@ async fn app(
     let mut backing_texture = Texture::new(ctx)?;
     backing_texture.set_image(None, 128, 128, ColorFormat::RGBA);
     ctx.set_viewport(0, 0, backing_texture.width(), backing_texture.height());
-    let surface = Surface::new(ctx, backing_texture)?;
+    let mut surface = Surface::new(ctx, backing_texture)?;
 
     surface.bind();
     ctx.clear();
@@ -103,7 +103,8 @@ async fn app(
     shader.set_uniform("image", UniformValue::Int(1))?;
 
     let bind_point = std::num::NonZeroU32::new(1).unwrap();
-    surface.texture().set_active(bind_point);
+    let texture = surface.take_texture().unwrap();
+    texture.set_active(bind_point);
 
     let mut angle = 0f32;
     loop {

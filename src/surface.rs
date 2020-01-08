@@ -4,7 +4,7 @@ use crate::*;
 pub struct Surface {
     pub(crate) ctx: Context,
     pub(crate) id: GlFramebuffer,
-    pub(crate) texture: Texture,
+    pub(crate) texture: Option<Texture>,
 }
 
 impl Surface {
@@ -25,13 +25,69 @@ impl Surface {
             gl.bind_framebuffer(glow::FRAMEBUFFER, *ctx.0.current_surface.borrow());
         }
 
-        Ok(Surface { ctx, id, texture })
+        Ok(Surface { ctx, id, texture: Some(texture) })
+    }
+
+    /// Check if a texture is attached to this Surface
+    ///
+    /// Textures can be attached via [`Surface::put_texture`] and removed via
+    /// [`Surface::take_texture`].
+    pub fn has_texture(&self) -> bool {
+        self.texture.is_some()
+    }
+
+    /// Check if this surface is bound to be operated on
+    ///
+    /// Call [`Surface::bind`] to bind the surface, which is required to render to it or to call
+    /// [`Surface::get_pixel_data`]
+    pub fn is_bound(&self) -> bool {
+        match *self.ctx.0.current_surface.borrow() {
+            Some(surface) => self.id == surface,
+            None => false,
+        }
+    }
+
+    /// Remove the texture from the Surface to operate on it
+    ///
+    /// Until another texture is added via [`Surface::put_texture`], operations on the Surface will
+    /// panic.
+    pub fn take_texture(&mut self) -> Option<Texture> {
+        let gl = &self.ctx.0.gl;
+        unsafe {
+            gl.framebuffer_texture_2d(
+                glow::FRAMEBUFFER,
+                glow::COLOR_ATTACHMENT0,
+                glow::TEXTURE_2D,
+                None,
+                0,
+            );
+        }
+        self.texture.take()
+    }
+
+    /// Put a texture into the Surface to operate on
+    pub fn put_texture(&mut self, texture: Texture) {
+        let gl = &self.ctx.0.gl;
+        unsafe {
+            gl.framebuffer_texture_2d(
+                glow::FRAMEBUFFER,
+                glow::COLOR_ATTACHMENT0,
+                glow::TEXTURE_2D,
+                Some(texture.id),
+                0,
+            );
+        }
+        self.texture = Some(texture);
     }
 
     /// Set the current render target to this surface
     ///
     /// Also necessary for operations like [`Surface::get_pixel_data`]
     pub fn bind(&self) {
+        assert!(
+            self.has_texture(),
+            "The surface had no attached image when bind was called"
+        );
         *self.ctx.0.current_surface.borrow_mut() = Some(self.id);
         let gl = &self.ctx.0.gl;
         unsafe {
@@ -48,23 +104,6 @@ impl Surface {
         }
     }
 
-    /// Get a reference to the bound texture
-    pub fn texture(&self) -> &Texture {
-        &self.texture
-    }
-
-    /// Get a mutable reference to the bound texture
-    pub fn texture_mut(&mut self) -> &mut Texture {
-        &mut self.texture
-    }
-
-    /// Check if this surface is bound to be operated on
-    pub fn is_bound(&self) -> bool {
-        match *self.ctx.0.current_surface.borrow() {
-            Some(surface) => self.id == surface,
-            None => false,
-        }
-    }
 
     /// Get the pixel data and write it to a buffer
     ///
@@ -84,6 +123,10 @@ impl Surface {
         assert!(
             self.is_bound(),
             "The surface wasn't bound when get_pixel_data was called"
+        );
+        assert!(
+            self.has_texture(),
+            "The surface had no attached image when get_pixel_data was called"
         );
         let bytes_per_pixel = format.bytes_per_pixel();
         let length = (width * height * bytes_per_pixel) as usize;

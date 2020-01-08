@@ -249,9 +249,6 @@ impl ShaderProgram {
     ///    [`VertexBuffer`]. If they are illegal indices, this will result in out-of-bounds reads on
     ///    the GPU and therefore undefined behavior. The caller is responsible for ensuring all
     ///    elements are valid and in-bounds.
-    /// 2. A texture-rendering feedback loop is undefined behavior. If rendering to an offscreen
-    ///    texture via [`Surface::bind`], that target texture may not be bound for drawing. Drawing
-    ///    to some texture while using that texture as input to the draw is undefined behavior.
     ///
     /// [`Surface::bind`]: crate::Surface::bind
     pub unsafe fn draw(
@@ -330,7 +327,6 @@ impl ShaderProgram {
     /// 3. The elements in the prepared buffer must correspond to valid locations within the vertex
     ///    buffer. See [`draw`] for details.
     /// 4. This shader must still be bound (see [`bind`])
-    /// 5. There may not be a texture feedback loop. See [`draw`] for details.
     ///
     /// [`prepare_draw`]: ShaderProgram::prepare_draw
     /// [`draw`]: ShaderProgram::draw
