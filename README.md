@@ -66,5 +66,5 @@ The core type of `golem` is the `Context`, which is constructed from the `glow::
  ## OpenGL Versions
  It currently is implemented via glow, and it targets OpenGL 3.2 on desktop and WebGL 1 (so it
  should run on a wide range of hardware.) GL 3.2 is selected for maximum desktop availability,
- ! and WebGL 1 is available on 97% of clients to WebGL's 75% (taken from caniuse.com at time of
+ and WebGL 1 is available on 97% of clients to WebGL's 75% (taken from caniuse.com at time of
  writing.)
