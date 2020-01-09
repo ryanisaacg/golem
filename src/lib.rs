@@ -57,7 +57,7 @@
 //!
 //! ## Initializing
 //!
-//! The user is respnsible for windowing and providing a valid [`glow Context`] to create a
+//! The user is responsible for windowing and providing a valid [`glow Context`] to create a
 //! [`Context`]. You can try out the [`blinds`](https://crates.io/crates/blinds) crate, which works
 //! well with `golem`, but using `winit` directly or other windowing solutions like `sdl2` are also
 //! options.
