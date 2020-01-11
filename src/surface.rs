@@ -153,6 +153,16 @@ impl Surface {
             gl.bind_framebuffer(glow::FRAMEBUFFER, None);
         }
     }
+
+    /// Get the width of the inner texture, or None if there is no texture
+    pub fn width(&self) -> Option<u32> {
+        self.texture.as_ref().map(|tex| tex.width())
+    }
+
+    /// Get the height of the inner texture, or None if there is no texture
+    pub fn height(&self) -> Option<u32> {
+        self.texture.as_ref().map(|tex| tex.height())
+    }
 }
 
 impl Drop for Surface {
