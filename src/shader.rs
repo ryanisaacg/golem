@@ -15,9 +15,11 @@ pub struct ShaderDescription<'a> {
     /// The text of the vertex shader stage
     ///
     /// Do not include the vertex inputs, outputs, or uniforms, use the [`vertex_input`],
-    /// [`fragment_input`], and [`uniforms`] fields instead. The inputs to this stage are
-    /// defined as the [`vertex_input`] and the ouptuts are the [`fragment_input`] as well as
-    /// `gl_Position`, a vec4 that represents the vertex's position.
+    /// [`fragment_input`], and [`uniforms`] fields instead. Just provide the 'main' function, as
+    /// well as any helpers. The shader inputs, outputs, and uniforms will be generated for you.
+    ///
+    /// The inputs to this stage are defined as the [`vertex_input`] and the ouptuts are the
+    /// [`fragment_input`] as well as `gl_Position`, a vec4 that represents the vertex's position.
     ///
     /// [`vertex_input`]: ShaderDescription::vertex_input
     /// [`fragment_input`]: ShaderDescription::fragment_input
