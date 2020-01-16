@@ -1,6 +1,6 @@
 [package]
 name = "golem"
-version = "0.1.0-alpha6"
+version = "0.1.0"
 authors = ["Ryan Goldstein <ryan@ryanisaacg.com>"]
 description = "A (mostly) safe library for graphics programming"
 categories = ["game-development", "web-programming", "graphics"]
@@ -20,5 +20,4 @@ glow = { version = "0.4.0", default-features = false }
 log = "0.4"
 
 [dev-dependencies]
-blinds = { version = "0.1.0-alpha9", features = ["gl"] }
-
+blinds = { version = "=0.1.0-alpha10", features = ["gl"] }
