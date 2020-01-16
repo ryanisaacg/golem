@@ -3,10 +3,11 @@ use std::num::NonZeroU32;
 
 /// An image stored on the GPU
 pub struct Texture {
-    pub(crate) ctx: Context,
+    ctx: Context,
     pub(crate) id: GlTexture,
-    pub(crate) width: u32,
-    pub(crate) height: u32,
+    width: u32,
+    height: u32,
+    mipmap: bool,
 }
 
 impl Texture {
@@ -19,8 +20,9 @@ impl Texture {
             id,
             width: 0,
             height: 0,
+            mipmap: false,
         };
-        tex.set_minification(TextureFilter::Linear);
+        tex.set_minification(TextureFilter::Linear).expect("Linear textures don't require mip-maps");
 
         Ok(tex)
     }
@@ -50,8 +52,9 @@ impl Texture {
 
     /// Set the image data associated with this texture
     ///
-    /// `width` and `height` must both be powers of 2 and less than the maximum texture size of the
-    /// GPU, given by [`glow::MAX_TEXTURE_SIZE`]
+    /// `width` and `height` must be less than the maximum texture size of the
+    /// GPU, given by [`glow::MAX_TEXTURE_SIZE`]. If they are both powers of 2, mipmaps will be
+    /// generated. If they aren't, mipmaps will be unavailable.
     ///
     /// If 'data' is None, the image will be created with no data at the given dimensions.
     /// If it is Some, it needs to be at least as long as `width * height *
@@ -104,7 +107,12 @@ impl Texture {
                 glow::UNSIGNED_BYTE,
                 data,
             );
-            gl.generate_mipmap(glow::TEXTURE_2D);
+            if width & (width - 1) == 0 && height & (height - 1) == 0 {
+                gl.generate_mipmap(glow::TEXTURE_2D);
+                self.mipmap = true;
+            } else {
+                self.mipmap = false;
+            }
             gl.bind_texture(glow::TEXTURE_2D, None);
         }
     }
@@ -166,13 +174,23 @@ impl Texture {
     }
 
     /// Determine how the texture should scale down
-    pub fn set_minification(&self, min: TextureFilter) {
-        self.set_texture_param(glow::TEXTURE_MIN_FILTER, min.to_gl());
+    pub fn set_minification(&self, min: TextureFilter) -> Result<(), GolemError> {
+        if !self.mipmap && min.uses_mipmap() {
+            Err(GolemError::MipMapsUnavailable)
+        } else {
+            self.set_texture_param(glow::TEXTURE_MIN_FILTER, min.to_gl());
+            Ok(())
+        }
     }
 
     /// Determine how the texture should scale up
-    pub fn set_magnification(&self, max: TextureFilter) {
-        self.set_texture_param(glow::TEXTURE_MAG_FILTER, max.to_gl());
+    pub fn set_magnification(&self, max: TextureFilter) -> Result<(), GolemError> {
+        if max.uses_mipmap() {
+            Err(GolemError::MipMapsUnavailable)
+        } else {
+            self.set_texture_param(glow::TEXTURE_MAG_FILTER, max.to_gl());
+            Ok(())
+        }
     }
 
     /// Determine how the texture is wrapped horizontally
@@ -196,6 +214,14 @@ pub enum TextureFilter {
     ///
     /// This is best for textures you want to pixelate as they scale
     Nearest,
+    /// Use the mipmap, and take the nearest sample from the nearest mipmap
+    NearestMipmapNearest,
+    /// Use the mipmap, and take an averaged sample from the nearest mipmap
+    LinearMipmapNearest,
+    /// Use the mipmap, and take the nearest sample from averaged layers of the mipmap
+    NearestMipmapLinear,
+    /// Use the mipmap, and take an averaged sample from averaged layers of the mipmap
+    LinearMipmapLinear,
 }
 
 impl TextureFilter {
@@ -203,6 +229,20 @@ impl TextureFilter {
         match self {
             TextureFilter::Linear => glow::LINEAR as i32,
             TextureFilter::Nearest => glow::NEAREST as i32,
+            TextureFilter::NearestMipmapNearest => glow::NEAREST_MIPMAP_NEAREST as i32,
+            TextureFilter::NearestMipmapLinear => glow::NEAREST_MIPMAP_LINEAR as i32,
+            TextureFilter::LinearMipmapNearest => glow::LINEAR_MIPMAP_NEAREST as i32,
+            TextureFilter::LinearMipmapLinear => glow::LINEAR_MIPMAP_LINEAR as i32,
+        }
+    }
+
+    /// If this texture filter uses texture mipmaps
+    ///
+    /// Mipmaps are only available for power-of-two textures, and only available for minification
+    pub fn uses_mipmap(&self) -> bool {
+        match self {
+            TextureFilter::Linear | TextureFilter::Nearest => false,
+            _ => true
         }
     }
 }

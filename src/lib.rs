@@ -193,6 +193,10 @@ pub enum GolemError {
     ///
     /// Shader operations include setting uniforms and drawing
     NotCurrentProgram,
+    /// A texture filter requiring mipmaps was used when mipmaps were unavailable
+    ///
+    /// Mipmaps are only available for minification, and only for power-of-two sized textures
+    MipMapsUnavailable,
 }
 
 impl From<String> for GolemError {
