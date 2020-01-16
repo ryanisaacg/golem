@@ -22,7 +22,8 @@ impl Texture {
             height: 0,
             mipmap: false,
         };
-        tex.set_minification(TextureFilter::Linear).expect("Linear textures don't require mip-maps");
+        tex.set_minification(TextureFilter::Linear)
+            .expect("Linear textures don't require mip-maps");
 
         Ok(tex)
     }
@@ -242,7 +243,7 @@ impl TextureFilter {
     pub fn uses_mipmap(&self) -> bool {
         match self {
             TextureFilter::Linear | TextureFilter::Nearest => false,
-            _ => true
+            _ => true,
         }
     }
 }
