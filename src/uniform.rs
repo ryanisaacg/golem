@@ -1,4 +1,7 @@
 use crate::{Dimension, NumberType};
+use alloc::boxed::Box;
+use alloc::format;
+use alloc::string::String;
 
 /// A uniform value to pass in to the [`ShaderDescription`]
 ///

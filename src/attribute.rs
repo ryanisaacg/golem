@@ -1,4 +1,7 @@
 use crate::{Dimension, Position};
+use alloc::borrow::ToOwned;
+use alloc::format;
+use alloc::string::String;
 
 #[derive(Clone)]
 /// An input to a shader program stage

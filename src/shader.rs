@@ -1,6 +1,8 @@
 use crate::*;
-use std::mem::size_of;
-use std::ops::Range;
+use core::mem::size_of;
+use core::ops::Range;
+use alloc::borrow::ToOwned;
+use alloc::vec::Vec;
 
 /// The parameters to create a [`ShaderProgram`]
 pub struct ShaderDescription<'a> {
