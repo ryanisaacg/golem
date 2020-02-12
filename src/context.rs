@@ -1,8 +1,8 @@
 use crate::blend::{BlendEquation, BlendFunction, BlendMode};
 use crate::{GlFramebuffer, GlProgram, GlVertexArray, GolemError};
-use glow::HasContext;
-use core::cell::RefCell;
 use alloc::rc::Rc;
+use core::cell::RefCell;
+use glow::HasContext;
 
 /// The context required to interact with the GPU
 pub struct Context(pub(crate) Rc<ContextContents>);
