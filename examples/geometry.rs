@@ -1,5 +1,3 @@
-#![no_std]
-
 use blinds::*;
 use golem::{
     Attribute, AttributeType, Context,
