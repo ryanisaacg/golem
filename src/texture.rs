@@ -73,14 +73,6 @@ impl Texture {
             height < glow::MAX_TEXTURE_SIZE,
             "The texture height was bigger than the maximum size"
         );
-        assert!(
-            width & (width - 1) == 0,
-            "The texture width was not a power of 2"
-        );
-        assert!(
-            height & (height - 1) == 0,
-            "The texture height was not a power of 2"
-        );
         if let Some(data) = data {
             assert!(
                 data.len() >= (width * height * color.bytes_per_pixel()) as usize,
@@ -113,6 +105,10 @@ impl Texture {
                 self.mipmap = true;
             } else {
                 self.mipmap = false;
+                self.set_wrap_h(TextureWrap::ClampToEdge)
+                    .expect("The texture wrap ClampToEdge is always valid");
+                self.set_wrap_v(TextureWrap::ClampToEdge)
+                    .expect("The texture wrap ClampToEdge is always valid");
             }
             gl.bind_texture(glow::TEXTURE_2D, None);
         }
@@ -195,17 +191,28 @@ impl Texture {
     }
 
     /// Determine how the texture is wrapped horizontally
-    pub fn set_wrap_h(&self, wrap: TextureWrap) {
-        self.set_texture_param(glow::TEXTURE_WRAP_S, wrap.to_gl());
+    pub fn set_wrap_h(&self, wrap: TextureWrap) -> Result<(), GolemError> {
+        if !self.mipmap && wrap != TextureWrap::ClampToEdge {
+            Err(GolemError::IllegalWrapOption)
+        } else {
+            self.set_texture_param(glow::TEXTURE_WRAP_S, wrap.to_gl());
+            Ok(())
+        }
     }
 
     /// Determine how the texture is wrapped vertically
-    pub fn set_wrap_v(&self, wrap: TextureWrap) {
-        self.set_texture_param(glow::TEXTURE_WRAP_T, wrap.to_gl());
+    pub fn set_wrap_v(&self, wrap: TextureWrap) -> Result<(), GolemError> {
+        if !self.mipmap && wrap != TextureWrap::ClampToEdge {
+            Err(GolemError::IllegalWrapOption)
+        } else {
+            self.set_texture_param(glow::TEXTURE_WRAP_T, wrap.to_gl());
+            Ok(())
+        }
     }
 }
 
 /// How textures should scale when being drawn at non-native sizes
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub enum TextureFilter {
     /// Smooth out the texture samples as the texture stretches or squashes
     ///
@@ -249,6 +256,7 @@ impl TextureFilter {
 }
 
 /// How the texture should wrap if a sample is outside the edge
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub enum TextureWrap {
     /// Repeat as though the texture was endlessly tiled
     Repeat,
