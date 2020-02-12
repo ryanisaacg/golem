@@ -202,8 +202,12 @@ pub enum GolemError {
     NotCurrentProgram,
     /// A texture filter requiring mipmaps was used when mipmaps were unavailable
     ///
-    /// Mipmaps are only available for minification, and only for power-of-two sized textures
+    /// Mipmaps are only available for minification, and only for power-of-two sized textures (2x2, 4x4, etc.)
     MipMapsUnavailable,
+    /// A wrap option was set for a Texture that isn't available
+    ///
+    /// Texture repeats are currently only supported for power-of-2 sized textures (2x2, 4x4, etc.)
+    IllegalWrapOption,
 }
 
 impl From<String> for GolemError {

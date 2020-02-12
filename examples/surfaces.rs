@@ -48,7 +48,7 @@ async fn app(
     eb.set_data(&indices);
     shader.bind();
     let mut backing_texture = Texture::new(ctx)?;
-    backing_texture.set_image(None, 128, 128, ColorFormat::RGBA);
+    backing_texture.set_image(None, 100, 100, ColorFormat::RGBA);
     ctx.set_viewport(0, 0, backing_texture.width(), backing_texture.height());
     let mut surface = Surface::new(ctx, backing_texture)?;
 
@@ -135,7 +135,7 @@ async fn app(
 }
 
 fn main() {
-    run_gl(Settings::default(), |window, gfx, events| {
-        async move { app(window, gfx, events).await.unwrap() }
+    run_gl(Settings::default(), |window, gfx, events| async move {
+        app(window, gfx, events).await.unwrap()
     });
 }
