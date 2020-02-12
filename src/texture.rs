@@ -233,7 +233,7 @@ pub enum TextureFilter {
 }
 
 impl TextureFilter {
-    pub(crate) fn to_gl(&self) -> i32 {
+    pub(crate) fn to_gl(self) -> i32 {
         match self {
             TextureFilter::Linear => glow::LINEAR as i32,
             TextureFilter::Nearest => glow::NEAREST as i32,
@@ -247,7 +247,7 @@ impl TextureFilter {
     /// If this texture filter uses texture mipmaps
     ///
     /// Mipmaps are only available for power-of-two textures, and only available for minification
-    pub fn uses_mipmap(&self) -> bool {
+    pub fn uses_mipmap(self) -> bool {
         match self {
             TextureFilter::Linear | TextureFilter::Nearest => false,
             _ => true,
@@ -267,7 +267,7 @@ pub enum TextureWrap {
 }
 
 impl TextureWrap {
-    pub(crate) fn to_gl(&self) -> i32 {
+    pub(crate) fn to_gl(self) -> i32 {
         match self {
             TextureWrap::Repeat => glow::REPEAT as i32,
             TextureWrap::ClampToEdge => glow::CLAMP_TO_EDGE as i32,
