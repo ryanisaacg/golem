@@ -1,5 +1,5 @@
 use super::*;
-use std::num::NonZeroU32;
+use core::num::NonZeroU32;
 
 /// An image stored on the GPU
 pub struct Texture {

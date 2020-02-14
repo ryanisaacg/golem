@@ -70,6 +70,13 @@
 //!
 //! [`Context`]: crate::Context
 //! [`glow Context`]: glow::Context
+
+#![no_std]
+
+extern crate alloc;
+
+use alloc::string::String;
+
 // TODO: add out-of-memory to GolemError?
 // TODO: unsafe audit: check for possible GL error conditions, and track them
 
