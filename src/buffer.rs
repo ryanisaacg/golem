@@ -22,7 +22,7 @@ pub struct Buffer<T> {
     id: GlBuffer,
     length: usize,
     target: u32,
-    _p: std::marker::PhantomData<T>,
+    _p: core::marker::PhantomData<T>,
 }
 
 impl Buffer<f32> {
@@ -36,7 +36,7 @@ impl Buffer<f32> {
             id,
             length: 0,
             target: glow::ARRAY_BUFFER,
-            _p: std::marker::PhantomData,
+            _p: core::marker::PhantomData,
         })
     }
 }
@@ -52,7 +52,7 @@ impl Buffer<u32> {
             id,
             length: 0,
             target: glow::ELEMENT_ARRAY_BUFFER,
-            _p: std::marker::PhantomData,
+            _p: core::marker::PhantomData,
         })
     }
 }

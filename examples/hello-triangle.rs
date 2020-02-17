@@ -98,7 +98,7 @@ async fn app(
 
 // Run our application!
 fn main() {
-    run_gl(Settings::default(), |window, gfx, events| {
-        async move { app(window, gfx, events).await.unwrap() }
+    run_gl(Settings::default(), |window, gfx, events| async move {
+        app(window, gfx, events).await.unwrap()
     });
 }
