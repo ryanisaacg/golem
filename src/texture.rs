@@ -116,8 +116,8 @@ impl Texture {
 
     /// Set a region of the texture data
     ///
-    /// The data provided must be enough to cover `(width - x) * (height - y) *
-    /// [`color.bytes_per_pixel()`]`. Also, the region must be within the texture's bounds.
+    /// The data provided must be enough to cover `width * height * [`color.bytes_per_pixel()`]`.
+    /// Also, the region must be within the texture's bounds.
     ///
     /// [`color.bytes_per_pixel()`]: ColorFormat::bytes_per_pixel
     pub fn set_subimage(
@@ -141,7 +141,7 @@ impl Texture {
             ColorFormat::RGB => glow::RGB,
             ColorFormat::RGBA => glow::RGBA,
         };
-        let required_data_len = (width - x) * (height - y) * color.bytes_per_pixel();
+        let required_data_len = width * height * color.bytes_per_pixel();
         assert!(data.len() >= required_data_len as usize);
         let gl = &self.ctx.0.gl;
         unsafe {
