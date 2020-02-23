@@ -1,5 +1,8 @@
 # Changelog
 
+## v0.1.2
+- Fix a possible panic when setting subimage data
+
 ## v0.1.1
 - FIX: Don't crash when creating non-pow-2 textures
 - Add no_std support (though glow still requires std)
