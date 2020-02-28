@@ -107,6 +107,8 @@ pub use self::surface::Surface;
 pub use self::texture::{Texture, TextureFilter, TextureWrap};
 pub use self::uniform::{Uniform, UniformType, UniformValue};
 
+pub use glow;
+
 pub(crate) enum Position {
     Input,
     Output,

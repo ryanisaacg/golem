@@ -8,7 +8,7 @@ use golem::{
 // The application loop, powered by the blinds crate
 async fn app(
     window: Window,
-    ctx: glow::Context,
+    ctx: golem::glow::Context,
     mut events: EventStream,
 ) -> Result<(), GolemError> {
     // Create a context from 'glow', GL On Whatever

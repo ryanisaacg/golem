@@ -8,7 +8,7 @@ use golem::{
 
 async fn app(
     window: Window,
-    ctx: glow::Context,
+    ctx: golem::glow::Context,
     mut events: EventStream,
 ) -> Result<(), GolemError> {
     let ctx = &Context::from_glow(ctx)?;
