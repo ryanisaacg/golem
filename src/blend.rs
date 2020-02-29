@@ -15,23 +15,28 @@
 //! and looks like:
 //!
 //! ```no_run
+//! # use golem::blend::{
+//! #   BlendMode, BlendInput, BlendFactor, BlendChannel, BlendOperation, BlendEquation,
+//! #   BlendFunction,
+//! # };
 //! # fn test() -> BlendMode {
 //! BlendMode {
 //!     equation: BlendEquation::Same(BlendOperation::Add),
 //!     function: BlendFunction::Same {
 //!         source: BlendFactor::Color {
 //!             input: BlendInput::Source,
-//!              channel: BlendChannel::Alpha,
-//!              is_inverse: false,
-//!          },
-//!          destination: BlendFactor::Color {
-//!              input: BlendInput::Source,
-//!              channel: BlendChannel::Alpha,
-//!              is_inverse: true,
-//!          },
-//!      },
-//!      color: [0.0; 4]
+//!             channel: BlendChannel::Alpha,
+//!             is_inverse: false,
+//!         },
+//!         destination: BlendFactor::Color {
+//!             input: BlendInput::Source,
+//!             channel: BlendChannel::Alpha,
+//!             is_inverse: true,
+//!         },
+//!     },
+//!     global_color: [0.0; 4]
 //! }
+//! # }
 //! ```
 //!
 //! For more information, see the documentation for the individual Blend enums.

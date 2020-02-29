@@ -32,3 +32,5 @@ jobs:
       run: cargo test --examples
     - name: std feature
       run: cargo check --features=std
+    - name: Tests
+      run: cargo test
