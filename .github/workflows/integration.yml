@@ -30,3 +30,5 @@ jobs:
       run: cargo clippy --target wasm32-unknown-unknown --features web-sys -- -D warnings
     - name: Examples
       run: cargo test --examples
+    - name: std feature
+      run: cargo check --features=std

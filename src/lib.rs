@@ -71,10 +71,11 @@
 //! [`Context`]: crate::Context
 //! [`glow Context`]: glow::Context
 
-#![no_std]
+#![cfg_attr(not(feature = "std"), no_std)]
 
 extern crate alloc;
 
+use alloc::fmt::{Display, Formatter, Result as FmtResult};
 use alloc::string::String;
 
 // TODO: add out-of-memory to GolemError?
@@ -217,3 +218,19 @@ impl From<String> for GolemError {
         GolemError::ContextError(other)
     }
 }
+
+impl Display for GolemError {
+    fn fmt(&self, fmt: &mut Formatter) -> FmtResult {
+        match self {
+            GolemError::ShaderCompilationError(e) => write!(fmt, "Shader compilation: {}", e),
+            GolemError::ContextError(e) => write!(fmt, "OpenGL: {}", e),
+            GolemError::NoSuchUniform(e) => write!(fmt, "Illegal uniform: {}", e),
+            GolemError::NotCurrentProgram => write!(fmt, "Shader program not bound"),
+            GolemError::MipMapsUnavailable => write!(fmt, "Mipmaps are unavailable"),
+            GolemError::IllegalWrapOption => write!(fmt, "An illegal texture wrap"),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for GolemError {}
