@@ -13,6 +13,7 @@ readme = "README.md"
 [features]
 stdweb = ["glow/stdweb"]
 web-sys = ["glow/web-sys"]
+std = []
 
 [dependencies]
 bytemuck = "1"

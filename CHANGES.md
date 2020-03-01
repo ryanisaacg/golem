@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Add the std feature
+- impl Error for GolemError (if std is enabled)
+
 ## v0.1.2
 - Fix a possible panic when setting subimage data
 
