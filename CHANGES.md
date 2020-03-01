@@ -1,7 +1,7 @@
 # Changelog
 
-## Unreleased
-
+## v0.1.3
+- Export the version of glow used
 - Add the std feature
 - impl Error for GolemError (if std is enabled)
 
