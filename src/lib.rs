@@ -99,6 +99,7 @@ mod texture;
 mod uniform;
 
 pub mod blend;
+pub mod depth;
 
 pub use self::attribute::{Attribute, AttributeType};
 pub use self::buffer::{Buffer, ElementBuffer, VertexBuffer};

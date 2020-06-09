@@ -1,4 +1,5 @@
 use crate::blend::{BlendEquation, BlendFunction, BlendMode};
+use crate::depth::DepthTestMode;
 use crate::{GlFramebuffer, GlProgram, GlVertexArray, GolemError};
 use alloc::rc::Rc;
 use core::cell::RefCell;
@@ -144,6 +145,29 @@ impl Context {
                 // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glEnable.xhtml
                 // gl::BLEND is on the whitelist
                 gl.disable(glow::BLEND);
+            },
+        }
+    }
+
+    pub fn set_depth_test_mode(&self, depth_test_state: Option<DepthTestMode>) {
+        let gl = &self.0.gl;
+        match depth_test_state {
+            Some(DepthTestMode {
+                function,
+                range_near,
+                range_far,
+            }) => unsafe {
+                // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glEnable.xhtml
+                gl.enable(glow::DEPTH_TEST);
+                // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glDepthFunc.xhtml
+                // The to_gl() function only produces valid values
+                gl.depth_func(function.to_gl());
+                // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glDepthRange.xhtml
+                gl.depth_range_f64(range_near, range_far);
+            },
+            None => unsafe {
+                // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glEnable.xhtml
+                gl.disable(glow::DEPTH_TEST);
             },
         }
     }
