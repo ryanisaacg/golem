@@ -55,6 +55,7 @@ async fn app(
         function: DepthTestFunction::Less,
         range_near: 0.0,
         range_far: 1.0,
+        depth_mask: true,
     }));
 
     shader.bind();
