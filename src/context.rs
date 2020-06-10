@@ -162,6 +162,7 @@ impl Context {
                 function,
                 range_near,
                 range_far,
+                depth_mask,
             }) => unsafe {
                 // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glEnable.xhtml
                 gl.enable(glow::DEPTH_TEST);
@@ -170,6 +171,8 @@ impl Context {
                 gl.depth_func(function.to_gl());
                 // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glDepthRange.xhtml
                 gl.depth_range_f64(range_near, range_far);
+                // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glDepthMask.xhtml
+                gl.depth_mask(depth_mask);
             },
             None => unsafe {
                 // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glEnable.xhtml

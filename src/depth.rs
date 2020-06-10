@@ -18,6 +18,16 @@ pub struct DepthTestMode {
     ///
     /// Default is `1.0f64`.
     pub range_far: f64,
+    /// Specifies whether the depth buffer is enabled for writing
+    ///
+    /// Default is `true`, i.e. "writing is enabled".
+    ///
+    /// Making the depth buffer read-only is useful for situations where you still want
+    /// depth tests to occur, but don't want to overwrite the values already in the depth buffer;
+    /// for example, common way of rendering scenes with a mix of opaque translucent objects is
+    /// to render opaque ones first, then disable depth mask and render translucent ones
+    /// from back to front.
+    pub depth_mask: bool,
 }
 
 impl Default for DepthTestMode {
@@ -26,6 +36,7 @@ impl Default for DepthTestMode {
             function: DepthTestFunction::default(),
             range_near: 0.0,
             range_far: 1.0,
+            depth_mask: true,
         }
     }
 }
