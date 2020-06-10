@@ -5,6 +5,7 @@
 ///
 /// Depth values (how far from the camera a pixel is) will be linearly mapped from `-1.0..1.0`
 /// (normalized depth coordinates, NDC) to `range_near..range_far` (window depth coordinates).
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub struct DepthTestMode {
     /// How to compare each incoming pixel's depth value to one present in the depth buffer
     ///
@@ -46,6 +47,7 @@ impl Default for DepthTestMode {
 ///
 /// "Depth value" is, roughly, how far away the pixel is from the camera; you'll almost always
 /// want `DepthTestFunction::Less` (which is the default).
+#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 pub enum DepthTestFunction {
     /// Pixel is never drawn
     Never,

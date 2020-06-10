@@ -16,15 +16,15 @@ async fn app(
 
     #[rustfmt::skip]
     let triangle_1 = [
-        0.5, -0.5, -0.2,
-        -0.5, 0.0, -0.2,
-        0.5, 0.5, -0.2,
+        0.5, -0.5, 0.1,
+        -0.5, 0.0, 0.1,
+        0.5, 0.5, 0.1,
     ];
     #[rustfmt::skip]
     let triangle_2 = [
-        -0.5, -0.5, -0.1,
-        0.5, 0.0, -0.1,
-        -0.5, 0.5, -0.1,
+        -0.5, -0.5, 0.2,
+        0.5, 0.0, 0.2,
+        -0.5, 0.5, 0.2,
     ];
     let indices = [0, 1, 2];
 
@@ -48,7 +48,6 @@ async fn app(
 
     let mut vb = VertexBuffer::new(ctx)?;
     let mut eb = ElementBuffer::new(ctx)?;
-    //vb2.set_data(&triangle_2);
     eb.set_data(&indices);
     ctx.clear();
     ctx.set_depth_test_mode(Some(DepthTestMode {
@@ -62,14 +61,14 @@ async fn app(
     vb.set_data(&triangle_1);
     shader.set_uniform("color", UniformValue::Vector4([1.0, 0.0, 0.0, 1.0]))?;
     unsafe {
-        shader.draw(&vb, &eb, 0..indices.len(), GeometryMode::Triangles);
+        shader.draw(&vb, &eb, 0..indices.len(), GeometryMode::Triangles)?;
     }
     // Second (green) triangle is drawn after the first (red), but is occluded due to depth test.
     // Try disabling the depth test or setting it to different functions.
     vb.set_data(&triangle_2);
     shader.set_uniform("color", UniformValue::Vector4([0.0, 1.0, 0.0, 1.0]))?;
     unsafe {
-        shader.draw(&vb, &eb, 0..indices.len(), GeometryMode::Triangles);
+        shader.draw(&vb, &eb, 0..indices.len(), GeometryMode::Triangles)?;
     }
     window.present();
 
