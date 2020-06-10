@@ -149,6 +149,12 @@ impl Context {
         }
     }
 
+    /// Set the depth test mode, with `None` disabling depth testing
+    ///
+    /// By default, this is `None`
+    ///
+    /// See the documentation for [`DepthTestMode`](depth/struct.DepthTestMode.html)
+    /// for the various depth testing options
     pub fn set_depth_test_mode(&self, depth_test_state: Option<DepthTestMode>) {
         let gl = &self.0.gl;
         match depth_test_state {
