@@ -22,3 +22,4 @@ log = "0.4"
 
 [dev-dependencies]
 blinds = { version = "0.1.0", default-features = false, features = ["gl"] }
+nalgebra-glm = "0.7.0"
