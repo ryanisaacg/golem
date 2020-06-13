@@ -1,5 +1,8 @@
 # Changelog
 
+## v0.1.4
+- Add an API for depth testing, via `DepthTestMode` and `DepthTestFunction`
+
 ## v0.1.3
 - Export the version of glow used
 - Add the std feature
