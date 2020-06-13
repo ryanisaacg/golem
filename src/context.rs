@@ -1,4 +1,5 @@
 use crate::blend::{BlendEquation, BlendFunction, BlendMode};
+use crate::depth::DepthTestMode;
 use crate::{GlFramebuffer, GlProgram, GlVertexArray, GolemError};
 use alloc::rc::Rc;
 use core::cell::RefCell;
@@ -144,6 +145,38 @@ impl Context {
                 // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glEnable.xhtml
                 // gl::BLEND is on the whitelist
                 gl.disable(glow::BLEND);
+            },
+        }
+    }
+
+    /// Set the depth test mode, with `None` disabling depth testing
+    ///
+    /// By default, this is `None`
+    ///
+    /// See the documentation for [`DepthTestMode`](depth/struct.DepthTestMode.html)
+    /// for the various depth testing options
+    pub fn set_depth_test_mode(&self, depth_test_state: Option<DepthTestMode>) {
+        let gl = &self.0.gl;
+        match depth_test_state {
+            Some(DepthTestMode {
+                function,
+                range_near,
+                range_far,
+                depth_mask,
+            }) => unsafe {
+                // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glEnable.xhtml
+                gl.enable(glow::DEPTH_TEST);
+                // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glDepthFunc.xhtml
+                // The to_gl() function only produces valid values
+                gl.depth_func(function.to_gl());
+                // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glDepthRange.xhtml
+                gl.depth_range_f64(range_near, range_far);
+                // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glDepthMask.xhtml
+                gl.depth_mask(depth_mask);
+            },
+            None => unsafe {
+                // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glEnable.xhtml
+                gl.disable(glow::DEPTH_TEST);
             },
         }
     }
