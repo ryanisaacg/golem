@@ -170,7 +170,9 @@ impl Context {
                 // The to_gl() function only produces valid values
                 gl.depth_func(function.to_gl());
                 // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glDepthRange.xhtml
-                gl.depth_range_f64(range_near, range_far);
+                // https://www.khronos.org/registry/OpenGL-Refpages/es3.0/html/glDepthRangef.xhtml
+                // Minimal OpenGL version is 4.1
+                gl.depth_range_f32(range_near, range_far);
                 // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glDepthMask.xhtml
                 gl.depth_mask(depth_mask);
             },
