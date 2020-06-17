@@ -169,10 +169,15 @@ impl Context {
                 // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glDepthFunc.xhtml
                 // The to_gl() function only produces valid values
                 gl.depth_func(function.to_gl());
+
                 // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glDepthRange.xhtml
+                #[cfg(not(target_arch = "wasm32"))]
+                gl.depth_range_f64(range_near as f64, range_far as f64);
+
                 // https://www.khronos.org/registry/OpenGL-Refpages/es3.0/html/glDepthRangef.xhtml
-                // Minimal OpenGL version is 4.1
+                #[cfg(target_arch = "wasm32")]
                 gl.depth_range_f32(range_near, range_far);
+
                 // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glDepthMask.xhtml
                 gl.depth_mask(depth_mask);
             },
