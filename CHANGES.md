@@ -1,6 +1,9 @@
 # Changelog
 
-## v0.1.4
+## v0.1.5
+- Fix a panic on the web when using the depth testing API
+
+## v0.1.4 (YANKED)
 - Add an API for depth testing, via `DepthTestMode` and `DepthTestFunction`
 
 ## v0.1.3

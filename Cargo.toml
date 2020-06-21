@@ -1,6 +1,6 @@
 [package]
 name = "golem"
-version = "0.1.4"
+version = "0.1.5"
 authors = ["Ryan Goldstein <ryan@ryanisaacg.com>"]
 description = "A (mostly) safe library for graphics programming"
 categories = ["game-development", "web-programming", "graphics"]
