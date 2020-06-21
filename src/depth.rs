@@ -13,20 +13,20 @@ pub struct DepthTestMode {
     pub function: DepthTestFunction,
     /// Specifies the mapping of the near clipping plane to window coordinates
     ///
-    /// Default is `0.0f64`.
-    pub range_near: f64,
+    /// Default is `0.0f32`.
+    pub range_near: f32,
     /// Specifies the mapping of the far clipping plane to window coordinates
     ///
-    /// Default is `1.0f64`.
-    pub range_far: f64,
+    /// Default is `1.0f32`.
+    pub range_far: f32,
     /// Specifies whether the depth buffer is enabled for writing
     ///
     /// Default is `true`, i.e. "writing is enabled".
     ///
     /// Making the depth buffer read-only is useful for situations where you still want
     /// depth tests to occur, but don't want to overwrite the values already in the depth buffer;
-    /// for example, common way of rendering scenes with a mix of opaque translucent objects is
-    /// to render opaque ones first, then disable depth mask and render translucent ones
+    /// for example, common way of rendering scenes with a mix of opaque and translucent objects
+    /// is to render opaque ones first, then disable depth mask and render translucent ones
     /// from back to front.
     pub depth_mask: bool,
 }
