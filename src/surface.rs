@@ -84,6 +84,18 @@ impl Surface {
         self.texture = Some(texture);
     }
 
+    /// Borrow the texture the Surface is holding
+    ///
+    /// # Safety
+    ///
+    /// The texture can be used and referenced while it is bound and while it is not bound.
+    /// However, it is undefined behavior to form a 'texture loop.' If a Surface is actively bound,
+    /// the texture cannot be used in the rendering pipeline. It is important to only ever render
+    /// to the Surface *or* use its texture, not both.
+    pub unsafe fn borrow_texture(&self) -> Option<&Texture> {
+        self.texture.as_ref()
+    }
+
     /// Set the current render target to this surface
     ///
     /// Also necessary for operations like [`Surface::get_pixel_data`]
