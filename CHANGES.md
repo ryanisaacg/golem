@@ -1,5 +1,8 @@
 # Changelog
 
+## v0.1.6
+- Add a function `borrow_texture` to `Surface`
+
 ## v0.1.5
 - Fix a panic on the web when using the depth testing API
 
