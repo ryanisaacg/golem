@@ -13,6 +13,7 @@ pub(crate) struct ContextContents {
     pub(crate) current_program: RefCell<Option<GlProgram>>,
     pub(crate) current_surface: RefCell<Option<GlFramebuffer>>,
     vao: GlVertexArray,
+    max_vertex_attrib_index: RefCell<u32>,
 }
 
 impl Drop for ContextContents {
@@ -45,6 +46,7 @@ impl Context {
             current_program: RefCell::new(None),
             current_surface: RefCell::new(None),
             vao,
+            max_vertex_attrib_index: RefCell::new(0),
         }));
         contents.set_clear_color(0.0, 0.0, 0.0, 1.0);
 
@@ -186,5 +188,14 @@ impl Context {
                 gl.disable(glow::DEPTH_TEST);
             },
         }
+    }
+
+    /// Set the new max attribute, clear the old one
+    pub(crate) fn max_attrib(&self, index: u32) -> u32 {
+        let mut attrib_ptr = self.0.max_vertex_attrib_index.borrow_mut();
+        let attrib = *attrib_ptr;
+        *attrib_ptr = index;
+
+        attrib
     }
 }
