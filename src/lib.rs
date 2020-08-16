@@ -190,6 +190,7 @@ pub enum GeometryMode {
 }
 
 #[derive(Debug)]
+#[non_exhaustive]
 /// The library's error conditions
 pub enum GolemError {
     /// The OpenGL Shader compilation failed, with the given error message
@@ -212,6 +213,8 @@ pub enum GolemError {
     ///
     /// Texture repeats are currently only supported for power-of-2 sized textures (2x2, 4x4, etc.)
     IllegalWrapOption,
+    /// On the web, the specified canvas was not found
+    CanvasNotFound,
 }
 
 impl From<String> for GolemError {

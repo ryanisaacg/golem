@@ -3,6 +3,7 @@ use crate::depth::DepthTestMode;
 use crate::{GlFramebuffer, GlProgram, GlVertexArray, GolemError};
 use alloc::rc::Rc;
 use core::cell::RefCell;
+use core::ffi::c_void;
 use glow::HasContext;
 
 /// The context required to interact with the GPU
@@ -27,7 +28,89 @@ impl Drop for ContextContents {
 }
 
 impl Context {
+    #[cfg(not(target_arch = "wasm32"))]
+    pub fn from_loader_function(func: impl FnMut(&str) -> *const c_void) -> Result<Context, GolemError> {
+        Self::from_glow(glow::Context::from_loader_function(func))
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    pub fn from_handle(handle: raw_window_handle::web::Webhandle) -> Result<Context, GolemError> {
+        let index = handle.id.to_string();
+        #[cfg(feature = "stdweb")]
+        return Self::from_handle_stdweb(index);
+        #[cfg(feature = "web-sys")]
+        return Self::from_handle_stdweb(index);
+    }
+
+    fn from_handle_stdweb(index: String) -> Result<Context, GolemError> {
+        let document = stdweb::document();
+        // TODO: stdweb doesn't have this
+        let elements = document.get_elements_by_tag_name("canvas");
+        let mut found = None;
+        for i in 0..elements.length() {
+            let potential = elements.get_with_index(i);
+            if potential.get_attribute("data-raw-handle").map_or(false, |attr| attr == index) {
+                found = Some(potential);
+            }
+        }
+        match found {
+            Some(element) => {
+                let canvas: web_sys::HtmlCanvasElement = element.unchecked_into();
+                use js_sys::{Map, Object};
+                use wasm_bindgen::{JsCast, JsValue};
+                use winit::platform::web::WindowExtWebSys;
+                let map = Map::new();
+                map.set(&JsValue::from_str("premultipliedAlpha"), &JsValue::FALSE);
+                map.set(&JsValue::from_str("alpha"), &JsValue::FALSE);
+                let props = Object::from_entries(&map).expect("TODO");
+
+                let ctx = canvas.get_context_with_context_options("webgl", &props)
+                    .expect("Failed to acquire a WebGL rendering context")
+                    .expect("Failed to acquire a WebGL rendering context")
+                    .dyn_into::<web_sys::WebGlRenderingContext>()
+                    .expect("WebGL context of unexpected type");
+
+                Self::from_glow(glow::Context::from_webgl1_context(ctx))
+            }
+            None => Err(GolemError::CanvasNotFound),
+        }
+    }
+
+    fn from_handle_bindgen(index: String) -> Result<Context, GolemError> {
+        let document = web_sys::document();
+        let elements = document.get_elements_by_tag_name("canvas");
+        let mut found = None;
+        for i in 0..elements.length() {
+            let potential = elements.get_with_index(i);
+            if potential.get_attribute("data-raw-handle").map_or(false, |attr| attr == index) {
+                found = Some(potential);
+            }
+        }
+        match found {
+            Some(element) => {
+                let canvas: web_sys::HtmlCanvasElement = element.unchecked_into();
+                use js_sys::{Map, Object};
+                use wasm_bindgen::{JsCast, JsValue};
+                use winit::platform::web::WindowExtWebSys;
+                let map = Map::new();
+                map.set(&JsValue::from_str("premultipliedAlpha"), &JsValue::FALSE);
+                map.set(&JsValue::from_str("alpha"), &JsValue::FALSE);
+                let props = Object::from_entries(&map).expect("TODO");
+
+                let ctx = canvas.get_context_with_context_options("webgl", &props)
+                    .expect("Failed to acquire a WebGL rendering context")
+                    .expect("Failed to acquire a WebGL rendering context")
+                    .dyn_into::<web_sys::WebGlRenderingContext>()
+                    .expect("WebGL context of unexpected type");
+
+                Self::from_glow(glow::Context::from_webgl1_context(ctx))
+            }
+            None => Err(GolemError::CanvasNotFound),
+        }
+    }
+
     /// Create an instance from an OpenGL context
+    #[deprecated]
     pub fn from_glow(gl: glow::Context) -> Result<Context, GolemError> {
         let vao = unsafe {
             // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glGenVertexArrays.xhtml
