@@ -1,5 +1,8 @@
 # Changelog
 
+## v0.1.7
+- Fix a crash that occurs when reducing the number of vertex attributes bound
+
 ## v0.1.6
 - Add a function `borrow_texture` to `Surface`
 
