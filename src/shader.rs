@@ -306,6 +306,14 @@ impl ShaderProgram {
                 }
                 offset += size * size_of::<f32>() as i32;
             }
+            // Disable any dangling vertex attributes
+            let current_max_attrib = self.input.len() as u32;
+            let previous_max_attrib = self.ctx.max_attrib(current_max_attrib);
+            for i in current_max_attrib..previous_max_attrib {
+                unsafe {
+                    gl.disable_vertex_attrib_array(i);
+                }
+            }
 
             Ok(())
         }
