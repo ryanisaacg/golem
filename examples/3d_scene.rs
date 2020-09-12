@@ -11,10 +11,13 @@ use nalgebra_glm as glm;
 
 async fn app(
     window: Window,
-    ctx: golem::glow::Context,
     mut events: EventStream,
 ) -> Result<(), GolemError> {
-    let ctx = &Context::from_glow(ctx)?;
+    // On desktop and web, we have to load the context slightly differently
+    #[cfg(not(target_arch = "wasm32"))]
+    let ctx = Context::from_loader_function(|addr| window.get_proc_address(addr))?;
+    #[cfg(target_arch = "wasm32")]
+    let ctx = Context::from_webgl_context(window.webgl_context())?;
 
     // A cube
     #[rustfmt::skip]
@@ -39,7 +42,7 @@ async fn app(
     ];
 
     let mut shader = ShaderProgram::new(
-        ctx,
+        &ctx,
         ShaderDescription {
             vertex_input: &[Attribute::new("vert_position", AttributeType::Vector(D3))],
             fragment_input: &[],
@@ -58,8 +61,8 @@ async fn app(
         },
     )?;
 
-    let mut vb = VertexBuffer::new(ctx)?;
-    let mut eb = ElementBuffer::new(ctx)?;
+    let mut vb = VertexBuffer::new(&ctx)?;
+    let mut eb = ElementBuffer::new(&ctx)?;
     vb.set_data(&vertices);
     eb.set_data(&indices);
     ctx.clear();
@@ -152,7 +155,7 @@ async fn app(
 }
 
 fn main() {
-    run_gl(Settings::default(), |window, gfx, events| async move {
-        app(window, gfx, events).await.unwrap()
+    run(Settings::default(), |window, events| async move {
+        app(window, events).await.unwrap()
     });
 }

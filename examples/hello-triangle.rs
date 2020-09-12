@@ -8,11 +8,13 @@ use golem::{
 // The application loop, powered by the blinds crate
 async fn app(
     window: Window,
-    ctx: golem::glow::Context,
     mut events: EventStream,
 ) -> Result<(), GolemError> {
-    // Create a context from 'glow', GL On Whatever
-    let ctx = &Context::from_glow(ctx)?;
+    // On desktop and web, we have to load the context slightly differently
+    #[cfg(not(target_arch = "wasm32"))]
+    let ctx = Context::from_loader_function(|addr| window.get_proc_address(addr))?;
+    #[cfg(target_arch = "wasm32")]
+    let ctx = Context::from_webgl_context(window.webgl_context())?;
 
     #[rustfmt::skip]
     // This is the data that represents the triangle
@@ -42,7 +44,7 @@ async fn app(
     // The input to the shader program is fed to the vertex_input, so your vertex data's format
     // needs to match what you define in vertex_input
     let mut shader = ShaderProgram::new(
-        ctx,
+        &ctx,
         ShaderDescription {
             // Take in to the shader a position (as a vector with 2 components) and a color (as a
             // vector with 4 components). This is the same format as 'vertices' above
@@ -72,8 +74,8 @@ async fn app(
     )?;
 
     // Create buffer objects, which we use to transfer data from the CPU to the GPU
-    let mut vb = VertexBuffer::new(ctx)?;
-    let mut eb = ElementBuffer::new(ctx)?;
+    let mut vb = VertexBuffer::new(&ctx)?;
+    let mut eb = ElementBuffer::new(&ctx)?;
     // Set the data of the buffer to be our vertices and indices from earlier
     vb.set_data(&vertices);
     eb.set_data(&indices);
@@ -98,7 +100,7 @@ async fn app(
 
 // Run our application!
 fn main() {
-    run_gl(Settings::default(), |window, gfx, events| async move {
-        app(window, gfx, events).await.unwrap()
+    run(Settings::default(), |window, events| async move {
+        app(window, events).await.unwrap()
     });
 }

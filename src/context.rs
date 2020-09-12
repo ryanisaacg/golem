@@ -28,8 +28,25 @@ impl Drop for ContextContents {
 }
 
 impl Context {
-    /// Create an instance from an OpenGL context
-    pub fn from_glow(gl: glow::Context) -> Result<Context, GolemError> {
+    /// Create an instance from a loader function
+    #[cfg(not(target_arch = "wasm32"))]
+    pub fn from_loader_function(func: impl FnMut(&str) -> *const core::ffi::c_void) -> Result<Context, GolemError> {
+        Self::from_glow(unsafe { glow::Context::from_loader_function(func) })
+    }
+
+    /// Create an instance from a WebGL context
+    #[cfg(target_arch = "wasm32")]
+    pub fn from_webgl_context(gl: web_sys::WebGlRenderingContext) -> Result<Context, GolemError> {
+        Self::from_glow(glow::Context::from_webgl1_context(gl))
+    }
+
+    /// Create an instance from a WebGL2 context
+    #[cfg(target_arch = "wasm32")]
+    pub fn from_webgl2_context(gl: web_sys::WebGl2RenderingContext) -> Result<Context, GolemError> {
+        Self::from_glow(glow::Context::from_webgl2_context(gl))
+    }
+
+    fn from_glow(gl: glow::Context) -> Result<Context, GolemError> {
         let vao = unsafe {
             // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glGenVertexArrays.xhtml
             // glow handles passing in '1' and returning the value to us
