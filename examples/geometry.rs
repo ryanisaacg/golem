@@ -5,10 +5,7 @@ use golem::{
     ElementBuffer, GeometryMode, GolemError, ShaderDescription, ShaderProgram, VertexBuffer,
 };
 
-async fn app(
-    window: Window,
-    mut events: EventStream,
-) -> Result<(), GolemError> {
+async fn app(window: Window, mut events: EventStream) -> Result<(), GolemError> {
     // On desktop and web, we have to load the context slightly differently
     #[cfg(not(target_arch = "wasm32"))]
     let ctx = Context::from_loader_function(|addr| window.get_proc_address(addr))?;

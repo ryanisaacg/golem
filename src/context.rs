@@ -30,7 +30,9 @@ impl Drop for ContextContents {
 impl Context {
     /// Create an instance from a loader function
     #[cfg(not(target_arch = "wasm32"))]
-    pub fn from_loader_function(func: impl FnMut(&str) -> *const core::ffi::c_void) -> Result<Context, GolemError> {
+    pub fn from_loader_function(
+        func: impl FnMut(&str) -> *const core::ffi::c_void,
+    ) -> Result<Context, GolemError> {
         Self::from_glow(unsafe { glow::Context::from_loader_function(func) })
     }
 
