@@ -132,7 +132,7 @@ impl ShaderProgram {
                 fragment_output,
                 desc.uniforms,
             );
-            log::debug!("Fragment shader source: {}", vertex_source);
+            log::debug!("Fragment shader source: {}", fragment_source);
             gl.shader_source(fragment, &fragment_source);
             gl.compile_shader(fragment);
             if !gl.get_shader_compile_status(fragment) {
