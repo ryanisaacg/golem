@@ -76,7 +76,9 @@ impl Context {
     pub fn set_scissor(&self, x: u32, y: u32, width: u32, height: u32) {
         unsafe {
             self.0.gl.enable(glow::SCISSOR_TEST);
-            self.0.gl.scissor(x as i32, y as i32, width as i32, height as i32);
+            self.0
+                .gl
+                .scissor(x as i32, y as i32, width as i32, height as i32);
         }
     }
 
