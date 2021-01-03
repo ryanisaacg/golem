@@ -248,10 +248,7 @@ impl TextureFilter {
     ///
     /// Mipmaps are only available for power-of-two textures, and only available for minification
     pub fn uses_mipmap(self) -> bool {
-        match self {
-            TextureFilter::Linear | TextureFilter::Nearest => false,
-            _ => true,
-        }
+        !matches!(self, TextureFilter::Linear | TextureFilter::Nearest)
     }
 }
 

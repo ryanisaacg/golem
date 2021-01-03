@@ -20,7 +20,7 @@ impl Uniform {
         shader.push_str("uniform ");
         self.u_type.write_type(shader);
         shader.push_str(self.name);
-        shader.push_str(";");
+        shader.push(';');
     }
 }
 

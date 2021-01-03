@@ -79,6 +79,6 @@ impl Attribute {
         };
         shader.push_str(&gl_type);
         shader.push_str(self.name());
-        shader.push_str(";");
+        shader.push(';');
     }
 }
