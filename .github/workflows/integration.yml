@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - uses: hecrj/setup-rust-action@v1
+    - uses: hecrj/setup-rust-action@v1.3.4
       with:
         rust-version: stable
         components: rustfmt
@@ -24,7 +24,7 @@ jobs:
         os: [ubuntu-latest, windows-latest, macOS-latest]
         rust: [stable, nightly]
     steps:
-    - uses: hecrj/setup-rust-action@v1.2.0
+    - uses: hecrj/setup-rust-action@v1.3.4
       with:
         rust-version: ${{ matrix.rust }}
     - uses: actions/checkout@master
@@ -41,7 +41,7 @@ jobs:
         rust: [stable]
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: hecrj/setup-rust-action@v1.2.0
+    - uses: hecrj/setup-rust-action@v1.3.4
       with:
         rust-version: ${{ matrix.rust }}
         components: clippy
@@ -57,7 +57,7 @@ jobs:
   web-check:
     runs-on: macOS-latest
     steps:
-    - uses: hecrj/setup-rust-action@v1.2.0
+    - uses: hecrj/setup-rust-action@v1.3.4
       with:
         rust-version: ${{ matrix.rust }}
         targets: wasm32-unknown-unknown
