@@ -67,6 +67,30 @@ impl Context {
         }
     }
 
+    /// Set the section of the framebuffer that will be affected by rendering operations.
+    /// Rendering operations won't have any effect on pixels outside this section. Unlike the
+    /// `set_viewport` method, this will *not* affect the scale of the rendered content.
+    ///
+    /// By default, the scissor is disabled, which means that rendering operations can draw on
+    /// the entire viewport. You can use `disable_scissor` to disable it again.
+    pub fn set_scissor(&self, x: u32, y: u32, width: u32, height: u32) {
+        unsafe {
+            self.0.gl.enable(glow::SCISSOR_TEST);
+            self.0
+                .gl
+                .scissor(x as i32, y as i32, width as i32, height as i32);
+        }
+    }
+
+    /// Disables the scissor (see the `set_scissor` method).
+    ///
+    /// This method has no effect if the scissor is already disabled.
+    pub fn disable_scissor(&self) {
+        unsafe {
+            self.0.gl.disable(glow::SCISSOR_TEST);
+        }
+    }
+
     /// Set the color the render target will be cleared to by [`clear`]
     ///
     /// [`clear`]: Context::clear
