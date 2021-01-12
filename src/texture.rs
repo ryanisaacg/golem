@@ -146,7 +146,7 @@ impl Texture {
         let gl = &self.ctx.0.gl;
         unsafe {
             gl.bind_texture(glow::TEXTURE_2D, Some(self.id));
-            gl.tex_sub_image_2d_u8_slice(
+            gl.tex_sub_image_2d(
                 glow::TEXTURE_2D,
                 0,
                 x as i32,
@@ -155,7 +155,7 @@ impl Texture {
                 height as i32,
                 format,
                 glow::UNSIGNED_BYTE,
-                Some(data),
+                glow::PixelUnpackData::Slice(data),
             );
             gl.generate_mipmap(glow::TEXTURE_2D);
             gl.bind_texture(glow::TEXTURE_2D, None);

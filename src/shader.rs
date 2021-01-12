@@ -197,6 +197,7 @@ impl ShaderProgram {
         if self.is_bound() {
             let gl = &self.ctx.0.gl;
             let location = unsafe { gl.get_uniform_location(self.id, name) };
+            let location = location.as_ref();
             if location.is_none() {
                 return Err(GolemError::NoSuchUniform(name.to_owned()));
             }
