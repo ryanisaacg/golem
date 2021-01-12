@@ -6,12 +6,12 @@ use golem::{
     Texture, Uniform, UniformType, UniformValue, VertexBuffer,
 };
 
-async fn app(
-    window: Window,
-    ctx: golem::glow::Context,
-    mut events: EventStream,
-) -> Result<(), GolemError> {
-    let ctx = &Context::from_glow(ctx)?;
+async fn app(window: Window, mut events: EventStream) -> Result<(), GolemError> {
+    // On desktop and web, we have to load the context slightly differently
+    #[cfg(not(target_arch = "wasm32"))]
+    let ctx = Context::from_loader_function(|addr| window.get_proc_address(addr))?;
+    #[cfg(target_arch = "wasm32")]
+    let ctx = Context::from_webgl_context(window.webgl_context())?;
 
     // Step 1: Draw a triangle to the surface
     #[rustfmt::skip]
@@ -24,7 +24,7 @@ async fn app(
     let indices = [0, 1, 2];
 
     let mut shader = ShaderProgram::new(
-        ctx,
+        &ctx,
         ShaderDescription {
             vertex_input: &[
                 Attribute::new("vert_position", AttributeType::Vector(D2)),
@@ -42,22 +42,22 @@ async fn app(
         },
     )?;
 
-    let mut vb = VertexBuffer::new(ctx)?;
-    let mut eb = ElementBuffer::new(ctx)?;
+    let mut vb = VertexBuffer::new(&ctx)?;
+    let mut eb = ElementBuffer::new(&ctx)?;
     vb.set_data(&vertices);
     eb.set_data(&indices);
     shader.bind();
-    let mut backing_texture = Texture::new(ctx)?;
+    let mut backing_texture = Texture::new(&ctx)?;
     backing_texture.set_image(None, 100, 100, ColorFormat::RGBA);
     ctx.set_viewport(0, 0, backing_texture.width(), backing_texture.height());
-    let surface = Surface::new(ctx, backing_texture)?;
+    let surface = Surface::new(&ctx, backing_texture)?;
 
     surface.bind();
     ctx.clear();
     unsafe {
         shader.draw(&vb, &eb, 0..indices.len(), GeometryMode::Triangles)?;
     }
-    Surface::unbind(ctx);
+    Surface::unbind(&ctx);
 
     let size = window.size();
     let scale = window.scale_factor();
@@ -75,7 +75,7 @@ async fn app(
     ];
     let indices = [0, 1, 2, 2, 3, 0];
     let mut shader = ShaderProgram::new(
-        ctx,
+        &ctx,
         ShaderDescription {
             vertex_input: &[
                 Attribute::new("vert_position", AttributeType::Vector(D2)),
@@ -137,7 +137,7 @@ async fn app(
 }
 
 fn main() {
-    run_gl(Settings::default(), |window, gfx, events| async move {
-        app(window, gfx, events).await.unwrap()
+    run(Settings::default(), |window, events| async move {
+        app(window, events).await.unwrap()
     });
 }

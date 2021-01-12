@@ -153,6 +153,7 @@ impl Surface {
         let gl = &self.ctx.0.gl;
         unsafe {
             gl.bind_framebuffer(glow::FRAMEBUFFER, Some(self.id));
+            let data = glow::PixelPackData::Slice(data);
             gl.read_pixels(
                 x as i32,
                 y as i32,

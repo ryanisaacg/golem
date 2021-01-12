@@ -200,6 +200,7 @@ impl ShaderProgram {
             if location.is_none() {
                 return Err(GolemError::NoSuchUniform(name.to_owned()));
             }
+            let location = location.as_ref();
             use UniformValue::*;
             unsafe {
                 match uniform {

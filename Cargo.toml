@@ -11,15 +11,19 @@ repository = "https://github.com/ryanisaacg/golem"
 readme = "README.md"
 
 [features]
-stdweb = ["glow/stdweb"]
-web-sys = ["glow/web-sys"]
 std = []
 
 [dependencies]
 bytemuck = "1"
-glow = { version = "0.4.0", default-features = false }
 log = "0.4"
 
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+glow = { version = "0.6.0", default-features = false }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+glow = { version = "0.6.0", default-features = false, features = ["web-sys"] }
+web-sys = { version = "0.3", features = ["WebGlRenderingContext"] }
+
 [dev-dependencies]
-blinds = { version = "0.1.0", default-features = false, features = ["gl"] }
+blinds = { version = "0.2.0", default-features = false }
 nalgebra-glm = "0.7.0"
