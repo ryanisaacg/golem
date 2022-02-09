@@ -1,6 +1,6 @@
 [package]
 name = "golem"
-version = "0.1.7"
+version = "0.2.0"
 authors = ["Ryan Goldstein <ryan@ryanisaacg.com>"]
 description = "A (mostly) safe library for graphics programming"
 categories = ["game-development", "web-programming", "graphics"]
@@ -11,7 +11,6 @@ repository = "https://github.com/ryanisaacg/golem"
 readme = "README.md"
 
 [features]
-stdweb = ["glow/stdweb"]
 web-sys = ["glow/web-sys"]
 std = []
 
