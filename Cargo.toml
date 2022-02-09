@@ -17,7 +17,7 @@ std = []
 
 [dependencies]
 bytemuck = "1"
-glow = { version = "0.4.0", default-features = false }
+glow = { version = "0.11.2", default-features = false }
 log = "0.4"
 
 [dev-dependencies]

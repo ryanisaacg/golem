@@ -196,10 +196,11 @@ impl ShaderProgram {
     pub fn set_uniform(&self, name: &str, uniform: UniformValue) -> Result<(), GolemError> {
         if self.is_bound() {
             let gl = &self.ctx.0.gl;
-            let location = unsafe { gl.get_uniform_location(self.id, name) };
-            if location.is_none() {
+            let tmp = unsafe { gl.get_uniform_location(self.id, name) };
+            if tmp.is_none() {
                 return Err(GolemError::NoSuchUniform(name.to_owned()));
             }
+            let location = tmp.as_ref();
             use UniformValue::*;
             unsafe {
                 match uniform {
