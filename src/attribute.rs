@@ -52,7 +52,7 @@ impl Attribute {
     }
 
     pub fn name(&self) -> &str {
-        &self.name
+        self.name
     }
 
     pub(crate) fn size(&self) -> i32 {

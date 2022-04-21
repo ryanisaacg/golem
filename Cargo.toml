@@ -11,7 +11,6 @@ repository = "https://github.com/ryanisaacg/golem"
 readme = "README.md"
 
 [features]
-web-sys = ["glow/web-sys"]
 std = []
 
 [dependencies]
@@ -20,5 +19,5 @@ glow = { version = "0.11.2", default-features = false }
 log = "0.4"
 
 [dev-dependencies]
-blinds = { version = "0.1.0", default-features = false, features = ["gl"] }
+blinds = "0.2.0"
 nalgebra-glm = "0.7.0"
