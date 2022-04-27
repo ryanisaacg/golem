@@ -8,8 +8,11 @@ use golem::{
 // The application loop, powered by the blinds crate
 async fn app(window: Window, mut events: EventStream) -> Result<(), GolemError> {
     // Create a context from 'glow', GL On Whatever
+    #[cfg(not(target_arch = "wasm32"))]
     let gl =
         unsafe { glow::Context::from_loader_function(|s| window.get_proc_address(s) as *const _) };
+    #[cfg(target_arch = "wasm32")]
+    let gl = unsafe { glow::Context::from_webgl1_context(window.webgl_context()) };
     let ctx = Context::from_glow(gl)?;
 
     #[rustfmt::skip]
