@@ -58,7 +58,7 @@ fn generate_shader_text(
     let mut shader = String::new();
 
     #[cfg(not(target_arch = "wasm32"))]
-    shader.push_str("#version 150\n");
+    shader.push_str("#version 100\n");
 
     shader.push_str("precision mediump float;\n");
     for attr in inputs.iter() {
