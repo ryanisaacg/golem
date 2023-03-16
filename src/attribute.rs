@@ -25,7 +25,7 @@ pub enum AttributeType {
 }
 
 impl Position {
-    #[cfg(target_arch = "wasm32")]
+    #[cfg(any(target_arch = "wasm32", feature = "gles"))]
     fn glsl_string(self) -> &'static str {
         use Position::*;
 
@@ -35,7 +35,7 @@ impl Position {
         }
     }
 
-    #[cfg(not(target_arch = "wasm32"))]
+    #[cfg(all(not(target_arch = "wasm32"), not(feature = "gles")))]
     fn glsl_string(self) -> &'static str {
         use Position::*;
 
@@ -68,7 +68,7 @@ impl Attribute {
     pub(crate) fn as_glsl(&self, _is_vertex: bool, pos: Position, shader: &mut String) {
         use AttributeType::*;
 
-        #[cfg(target_arch = "wasm32")]
+        #[cfg(any(target_arch = "wasm32", feature = "gles"))]
         let pos = if _is_vertex { pos } else { Position::Output };
 
         shader.push_str(pos.glsl_string());
