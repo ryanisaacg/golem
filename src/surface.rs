@@ -160,7 +160,7 @@ impl Surface {
                 height as i32,
                 format,
                 glow::UNSIGNED_BYTE,
-                data,
+                glow::PixelPackData::Slice(data),
             );
             gl.bind_framebuffer(glow::FRAMEBUFFER, None);
         }

@@ -197,11 +197,11 @@ impl Context {
                 gl.depth_func(function.to_gl());
 
                 // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glDepthRange.xhtml
-                #[cfg(not(target_arch = "wasm32"))]
+                #[cfg(all(not(target_arch = "wasm32"), not(feature = "gles")))]
                 gl.depth_range_f64(range_near as f64, range_far as f64);
 
                 // https://www.khronos.org/registry/OpenGL-Refpages/es3.0/html/glDepthRangef.xhtml
-                #[cfg(target_arch = "wasm32")]
+                #[cfg(any(target_arch = "wasm32", feature = "gles"))]
                 gl.depth_range_f32(range_near, range_far);
 
                 // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glDepthMask.xhtml
