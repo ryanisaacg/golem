@@ -1,6 +1,6 @@
 [package]
 name = "golem"
-version = "0.2.1"
+version = "0.2.2"
 authors = ["Ryan Goldstein <ryan@ryanisaacg.com>", "Luke Jones <luke@ljones.dev"]
 description = "A (mostly) safe library for graphics programming"
 categories = ["game-development", "web-programming", "graphics"]
@@ -19,7 +19,6 @@ gles = []
 bytemuck = "1"
 glow = { version = "0.13.1", default-features = false }
 log = "0.4"
-lazy-regex = "3.1"
 
 [dev-dependencies]
 blinds = "0.2.0"

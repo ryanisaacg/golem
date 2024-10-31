@@ -3,7 +3,6 @@ use alloc::borrow::ToOwned;
 use alloc::vec::Vec;
 use core::mem::size_of;
 use core::ops::Range;
-use lazy_regex::regex_replace_all;
 
 /// The parameters to create a [`ShaderProgram`]
 pub struct ShaderDescription<'a> {
@@ -114,20 +113,10 @@ impl ShaderProgram {
             // For GL pre/post condition explanations, see vertex shader compilation above
             let fragment = gl.create_shader(glow::FRAGMENT_SHADER)?;
 
-            #[cfg(any(target_arch = "wasm32", feature = "gles"))]
-            let (fragment_output, fragment_body) = {
-                (
-                    &[],
-                    &regex_replace_all!(r#"(\btexture\b)"#i, desc.fragment_shader, |_, _| {
-                        "texture2D"
-                    },),
-                )
-            };
-
             // Handle creating the output color and giving it a name, but only on desktop gl
-            // #[cfg(any(target_arch = "wasm32", feature = "gles"))]
-            // let (fragment_output, fragment_body) =
-            //     { (&[], &desc.fragment_shader.replace("texture", "texture2D")) };
+            #[cfg(any(target_arch = "wasm32", feature = "gles"))]
+            let (fragment_output, fragment_body) =
+                { (&[], &desc.fragment_shader.replace("btexture", "texture2D")) };
 
             #[cfg(all(not(target_arch = "wasm32"), not(feature = "gles")))]
             let (fragment_output, fragment_body) = {
