@@ -96,6 +96,18 @@ impl Surface {
         self.texture.as_ref()
     }
 
+    /// Mutably borrow the texture the Surface is holding
+    ///
+    /// # Safety
+    ///
+    /// The texture can be used and referenced while it is bound and while it is not bound.
+    /// However, it is undefined behavior to form a 'texture loop.' If a Surface is actively bound,
+    /// the texture cannot be used in the rendering pipeline. It is important to only ever render
+    /// to the Surface *or* use its texture, not both.
+    pub unsafe fn mut_texture(&mut self) -> Option<&mut Texture> {
+        self.texture.as_mut()
+    }
+
     /// Set the current render target to this surface
     ///
     /// Also necessary for operations like [`Surface::get_pixel_data`]
@@ -160,7 +172,7 @@ impl Surface {
                 height as i32,
                 format,
                 glow::UNSIGNED_BYTE,
-                data,
+                glow::PixelPackData::Slice(data),
             );
             gl.bind_framebuffer(glow::FRAMEBUFFER, None);
         }

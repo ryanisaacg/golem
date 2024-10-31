@@ -1,25 +1,25 @@
 [package]
 name = "golem"
-version = "0.1.7"
-authors = ["Ryan Goldstein <ryan@ryanisaacg.com>"]
+version = "0.2.2"
+authors = ["Ryan Goldstein <ryan@ryanisaacg.com>", "Luke Jones <luke@ljones.dev"]
 description = "A (mostly) safe library for graphics programming"
 categories = ["game-development", "web-programming", "graphics"]
-keywords = ["gl", "opengl", "webgl", "graphics",]
+keywords = ["gl", "opengl", "webgl", "graphics", "gles",]
 license = "MIT OR Apache-2.0"
-edition = "2018"
+edition = "2021"
 repository = "https://github.com/ryanisaacg/golem"
 readme = "README.md"
 
 [features]
-stdweb = ["glow/stdweb"]
-web-sys = ["glow/web-sys"]
+default = ["gles"]
 std = []
+gles = []
 
 [dependencies]
 bytemuck = "1"
-glow = { version = "0.4.0", default-features = false }
+glow = { version = "0.13.1", default-features = false }
 log = "0.4"
 
 [dev-dependencies]
-blinds = { version = "0.1.0", default-features = false, features = ["gl"] }
-nalgebra-glm = "0.7.0"
+blinds = "0.2.0"
+nalgebra-glm = "0.19.0"

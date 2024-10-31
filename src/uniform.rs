@@ -56,7 +56,7 @@ impl UniformType {
                 u_type.write_type(shader);
                 shader.push_str(&format!("[{}]", dim));
             }
-            UserType(string) => shader.push_str(&string),
+            UserType(string) => shader.push_str(string),
         }
     }
 }
