@@ -1,9 +1,13 @@
 use crate::blend::{BlendEquation, BlendFunction, BlendMode};
 use crate::depth::DepthTestMode;
 use crate::{GlFramebuffer, GlProgram, GlVertexArray, GolemError};
-use alloc::rc::Rc;
 use core::cell::RefCell;
+#[cfg(not(target_arch = "wasm32"))]
+use core::ffi::{c_void, CStr};
 use glow::HasContext;
+use std::rc::Rc;
+#[cfg(target_arch = "wasm32")]
+use web_sys::WebGl2RenderingContext;
 
 /// The context required to interact with the GPU
 pub struct Context(pub(crate) Rc<ContextContents>);
@@ -28,8 +32,31 @@ impl Drop for ContextContents {
 }
 
 impl Context {
-    /// Create an instance from an OpenGL context
-    pub fn from_glow(gl: glow::Context) -> Result<Context, GolemError> {
+    #[cfg(not(target_arch = "wasm32"))]
+    pub unsafe fn from_loader_function_cstr<F>(loader_function: F) -> Result<Context, GolemError>
+    where
+        F: FnMut(&CStr) -> *const c_void,
+    {
+        let context = unsafe { glow::Context::from_loader_function_cstr(loader_function) };
+        Self::from_glow(context)
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    pub unsafe fn from_loader_function<F>(loader_function: F) -> Result<Context, GolemError>
+    where
+        F: FnMut(&str) -> *const c_void,
+    {
+        let context = unsafe { glow::Context::from_loader_function(loader_function) };
+        Self::from_glow(context)
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    pub fn from_webgl2_context(ctx: WebGl2RenderingContext) -> Result<Context, GolemError> {
+        let context = glow::Context::from_webgl2_context(ctx);
+        Self::from_glow(context)
+    }
+
+    fn from_glow(gl: glow::Context) -> Result<Context, GolemError> {
         let vao = unsafe {
             // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glGenVertexArrays.xhtml
             // glow handles passing in '1' and returning the value to us

@@ -11,10 +11,14 @@ use nalgebra_glm as glm;
 
 async fn app(
     window: Window,
-    ctx: golem::glow::Context,
     mut events: EventStream,
 ) -> Result<(), GolemError> {
-    let ctx = &Context::from_glow(ctx)?;
+    #[cfg(not(target_arch = "wasm32"))]
+    let ctx = unsafe {
+        &Context::from_loader_function_cstr(|func| window.get_proc_address(func))?
+    };
+    #[cfg(target_arch = "wasm32")]
+    let ctx = &Context::from_webgl2_context(window.webgl2_context())?;
 
     // A cube
     #[rustfmt::skip]
@@ -152,7 +156,7 @@ async fn app(
 }
 
 fn main() {
-    run_gl(Settings::default(), |window, gfx, events| async move {
-        app(window, gfx, events).await.unwrap()
+    run(Settings::default(), |window, events| async move {
+        app(window, events).await.unwrap()
     });
 }

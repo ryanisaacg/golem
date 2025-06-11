@@ -63,20 +63,13 @@
 //! options.
 //!
 //! ## OpenGL Versions
-//! It currently is implemented via glow, and it targets OpenGL 3.2 on desktop and WebGL 1 (so it
-//! should run on a wide range of hardware.) GL 3.2 is selected for maximum desktop availability,
-//! and WebGL 1 is available on 97% of clients to WebGL's 75% (taken from caniuse.com at time of
-//! writing.)
+//! Golem is implemented via glow, and it targets OpenGL 3.2 on desktop and WebGL 2.
 //!
 //! [`Context`]: crate::Context
 //! [`glow Context`]: glow::Context
 
-#![cfg_attr(not(feature = "std"), no_std)]
-
-extern crate alloc;
-
-use alloc::fmt::{Display, Formatter, Result as FmtResult};
-use alloc::string::String;
+use std::fmt::{Display, Formatter, Result as FmtResult};
+use std::string::String;
 
 // TODO: add out-of-memory to GolemError?
 // TODO: unsafe audit: check for possible GL error conditions, and track them
@@ -233,5 +226,4 @@ impl Display for GolemError {
     }
 }
 
-#[cfg(feature = "std")]
 impl std::error::Error for GolemError {}

@@ -1,8 +1,8 @@
 use crate::*;
-use alloc::borrow::ToOwned;
-use alloc::vec::Vec;
 use core::mem::size_of;
 use core::ops::Range;
+use std::borrow::ToOwned;
+use std::vec::Vec;
 
 /// The parameters to create a [`ShaderProgram`]
 pub struct ShaderDescription<'a> {
@@ -201,6 +201,7 @@ impl ShaderProgram {
                 return Err(GolemError::NoSuchUniform(name.to_owned()));
             }
             use UniformValue::*;
+            let location = location.as_ref();
             unsafe {
                 match uniform {
                     Int(x) => gl.uniform_1_i32(location, x),

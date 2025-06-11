@@ -8,11 +8,14 @@ use golem::{
 // The application loop, powered by the blinds crate
 async fn app(
     window: Window,
-    ctx: golem::glow::Context,
     mut events: EventStream,
 ) -> Result<(), GolemError> {
-    // Create a context from 'glow', GL On Whatever
-    let ctx = &Context::from_glow(ctx)?;
+    #[cfg(not(target_arch = "wasm32"))]
+    let ctx = unsafe {
+        &Context::from_loader_function_cstr(|func| window.get_proc_address(func))?
+    };
+    #[cfg(target_arch = "wasm32")]
+    let ctx = &Context::from_webgl2_context(window.webgl2_context())?;
 
     #[rustfmt::skip]
     // This is the data that represents the triangle
@@ -98,7 +101,7 @@ async fn app(
 
 // Run our application!
 fn main() {
-    run_gl(Settings::default(), |window, gfx, events| async move {
-        app(window, gfx, events).await.unwrap()
+    run(Settings::default(), |window, events| async move {
+        app(window, events).await.unwrap()
     });
 }

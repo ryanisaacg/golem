@@ -1,6 +1,6 @@
 [package]
 name = "golem"
-version = "0.1.7"
+version = "0.2.0-alpha0"
 authors = ["Ryan Goldstein <ryan@ryanisaacg.com>"]
 description = "A (mostly) safe library for graphics programming"
 categories = ["game-development", "web-programming", "graphics"]
@@ -10,16 +10,18 @@ edition = "2018"
 repository = "https://github.com/ryanisaacg/golem"
 readme = "README.md"
 
-[features]
-stdweb = ["glow/stdweb"]
-web-sys = ["glow/web-sys"]
-std = []
-
 [dependencies]
 bytemuck = "1"
-glow = { version = "0.4.0", default-features = false }
+glow = "0.16"
 log = "0.4"
 
+[target.'cfg(target_arch = "wasm32")'.dependencies.web_sys]
+version = "~0.3.60"
+package = "web-sys"
+features = [
+  "WebGl2RenderingContext",
+]
+
 [dev-dependencies]
-blinds = { version = "0.1.0", default-features = false, features = ["gl"] }
+blinds = "0.3.0-alpha0"
 nalgebra-glm = "0.7.0"
